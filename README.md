@@ -13,33 +13,35 @@ A Quarkus REST AND MCP Server that connects to the Netatmo Weather Station API a
 ## Endpoints
 
 ### Get All Weather Stations Data
-```
+
+```http
 GET /weather/stations
 ```
+
 Returns complete weather station data including all devices and modules.
 
-### Get Specific Device Data
-```
-GET /weather/stations/{deviceId}
-```
-Returns weather station data for a specific device ID.
-
 ### Get Current Weather Data
-```
+
+```http
 GET /weather/current
 ```
+
 Returns simplified current weather data (temperature, humidity, pressure, CO2, noise) from the first station.
 
 ### Get Available Devices
-```
+
+```http
 GET /weather/devices
 ```
+
 Returns a list of available weather station devices with their IDs, names, types, and supported data types. Use this to get device IDs for historical data requests.
 
 ### Get Historical Weather Data
-```
+
+```http
 GET /weather/historical
 ```
+
 Returns historical weather data. If no device_id is provided, automatically uses the first available device. Supports query parameters:
 - `device_id` (optional): Specific device ID. If not provided, uses the first available device.
 - `module_id` (optional): Specific module ID 
@@ -49,47 +51,12 @@ Returns historical weather data. If no device_id is provided, automatically uses
 - `date_end` (optional): Unix timestamp for end date. Default: now
 - `limit` (optional): Maximum number of data points. Default: 1024
 
-### Get Historical Weather Data for Specific Device
-```
-GET /weather/historical/{deviceId}
-```
-Returns historical weather data for a specific device. Supports same query parameters as above.
-
-### Get Processed Historical Weather Data
-```
-GET /weather/historical/processed
-```
-Returns historical weather data in a processed, more user-friendly format with structured timestamps and measurements. Supports same query parameters as `/weather/historical`. This endpoint provides:
-- Separated timestamps and measurement values
-- Cleaner data structure for easier consumption
-- Both raw and processed data in the response
-
-### Get Simple Historical Weather Data
-```
-GET /weather/historical/simple
-```
-Returns basic information about the historical data request without complex nested structures. This endpoint is useful for debugging and understanding the Netatmo API response structure. Supports same query parameters as `/weather/historical`. This endpoint provides:
-- Basic request parameters (device_id, scale, sensor types)
-- Response status from Netatmo API
-- Debug information about the response body structure
-- No complex nested objects that might cause serialization issues
-
-### Get Working Historical Weather Data
-```
-GET /weather/historical/working
-```
-Returns properly parsed historical weather data based on the actual Netatmo API response structure. Supports same query parameters as `/weather/historical`. This endpoint provides:
-- Correctly parsed measurement data from Netatmo's `{beg_time, step_time, value}` structure
-- Begin time (Unix timestamp when measurements start)
-- Step time (interval between measurements in seconds)
-- Values array (the actual historical measurements)
-- Total data points count
-- Clean, usable format for consuming historical weather data
-
 ### Health Check
-```
+
+```http
 GET /weather
 ```
+
 Returns a simple status message.
 
 ## Model Context Protocol (MCP) Server
@@ -104,16 +71,19 @@ This application also exposes weather data as MCP tools that can be used by AI a
 ### Available MCP Tools
 
 #### `get_current_weather`
+
 Gets current weather data from the Netatmo weather station.
 - Returns temperature, humidity, pressure, CO2, noise levels
 - Includes both indoor and outdoor measurements
 
-#### `get_available_devices` 
+#### `get_available_devices`
+
 Lists all available Netatmo weather station devices.
 - Shows device IDs, station names, types, and supported data types
 - Useful for getting device IDs for historical data requests
 
 #### `get_historical_weather`
+
 Gets historical weather data from the Netatmo weather station.
 - **Parameters:**
   - `deviceId` (optional): Device ID, uses first device if not provided
@@ -129,9 +99,10 @@ MCP tools can be used by:
 - Custom applications using MCP protocol
 
 Example MCP client usage:
+
 ```bash
 # Connect to the MCP server
-curl -X POST http://localhost:8080/mcp/tools/call \
+curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
   -d '{"method": "tools/call", "params": {"name": "get_current_weather"}}'
 ```
