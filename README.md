@@ -1,6 +1,6 @@
 # Netatmo Weather Station API
 
-A Quarkus REST client for connecting to the Netatmo Weather Station API and retrieving weather data.
+A Quarkus REST AND MCP Server that connects to the Netatmo Weather Station API and retrieves weather data.
 
 ## Features
 
