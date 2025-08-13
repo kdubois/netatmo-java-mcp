@@ -6,17 +6,34 @@ import io.quarkiverse.mcp.server.ToolArg;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.acme.dto.HistoricalWeatherData;
+import org.acme.exception.WeatherApiException;
+import org.acme.exception.WeatherApiException.ErrorType;
 import org.acme.service.WeatherService;
-import org.acme.util.HistoricalDataUtil;
+import org.acme.util.ResponseUtil.ResultWithStatus;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 @Singleton
 public class WeatherMcpTools {
 
     @Inject
     WeatherService weatherService;
+    
+    // Reusable ObjectMapper instance configured once
+    private final ObjectMapper objectMapper;
+    
+    public WeatherMcpTools() {
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    }
 
     @Tool(name = "get_current_weather", description = "Get current weather data from Netatmo weather station")
     public TextContent getCurrentWeather() {
@@ -65,134 +82,138 @@ public class WeatherMcpTools {
         });
     }
 
-@Tool(name = "get_historical_weather", description = "Get historical weather data from Netatmo weather station. Returns data in JSON format.")
+    @Tool(name = "get_historical_weather", description = "Get historical weather data from Netatmo weather station for a specified date range. Returns data in JSON format.")
     public TextContent getHistoricalWeather(
             @ToolArg(description = "Device ID (optional, uses first device if not provided)") String deviceId,
             @ToolArg(description = "Scale: 30min, 1hour, 3hours, 1day, 1week, 1month (default: 1hour)") String scale,
             @ToolArg(description = "Sensor types comma-separated: Temperature,Humidity,Pressure,CO2,Noise (default: Temperature,Humidity,Pressure)") String sensorTypes,
-            @ToolArg(description = "Number of days back to get data (default: 7)") String daysBack
+            @ToolArg(description = "Begin date in format YYYY-MM-DD (default: 7 days ago)") String beginDate,
+            @ToolArg(description = "End date in format YYYY-MM-DD (default: current date)") String endDate,
+            @ToolArg(description = "Maximum number of data points to return (default: all)") String maxDataPoints
     ) {
         return McpResponseUtil.executeWithExceptionHandling(() -> {
             // Parse and normalize parameters
-            Integer days = parseDaysBack(daysBack);
-            final String normalizedScale = HistoricalDataUtil.normalizeScale(scale);
-            final String normalizedSensorTypes = HistoricalDataUtil.normalizeSensorTypes(sensorTypes);
+            final Integer maxPoints = parseMaxDataPoints(maxDataPoints);
             
-            var result = weatherService.getHistoricalWeather(deviceId, null, normalizedScale, normalizedSensorTypes, days, null);
+            // Parse date parameters
+            Long dateBegin = parseBeginDate(beginDate);
+            Long dateEnd = parseEndDate(endDate);
             
-            return McpResponseUtil.handleResult(result, () -> {
-                // Create a JSON-like representation of the data
-                StringBuilder json = new StringBuilder();
-                json.append("{\n");
-                json.append("  \"success\": ").append(result.success).append(",\n");
-                json.append("  \"deviceId\": \"").append(result.deviceId).append("\",\n");
-                json.append("  \"scale\": \"").append(result.scale).append("\",\n");
-                json.append("  \"sensorTypes\": ").append(formatList(result.sensorTypes)).append(",\n");
-                json.append("  \"beginTime\": \"").append(result.beginTime).append("\",\n");
-                json.append("  \"stepTime\": ").append(result.stepTime).append(",\n");
-                json.append("  \"totalDataPoints\": ").append(result.totalDataPoints).append(",\n");
-                json.append("  \"daysBack\": ").append(result.daysBack).append(",\n");
-                
-                // Add outdoor module info if available
-                if (result.outdoorModuleId != null) {
-                    json.append("  \"outdoorModuleId\": \"").append(result.outdoorModuleId).append("\",\n");
-                    json.append("  \"outdoorModuleName\": \"").append(result.outdoorModuleName).append("\",\n");
-                    
-                    if (result.outdoorTemperature != null) {
-                        json.append("  \"outdoorTemperature\": ").append(result.outdoorTemperature).append(",\n");
-                    }
-                    
-                    if (result.outdoorHumidity != null) {
-                        json.append("  \"outdoorHumidity\": ").append(result.outdoorHumidity).append(",\n");
-                    }
-                }
-                
-                // Add data points (limited to first 5 for readability)
-                json.append("  \"values\": [\n");
-                if (result.values != null && !result.values.isEmpty()) {
-                    int count = 0;
-                    for (Object value : result.values) {
-                        if (count > 0) {
-                            json.append(",\n");
-                        }
-                        json.append("    ").append(formatValue(value));
-                        count++;                        
-                    }
-                }
-                json.append("\n  ]\n");
-                json.append("}");
-                
-                return json.toString();
+            // Call service to get historical data with direct date parameters
+            HistoricalWeatherData result = weatherService.getHistoricalWeather(
+                deviceId,
+                null,
+                scale,
+                sensorTypes,
+                beginDate,
+                endDate,
+                null
+            );
+            
+            return McpResponseUtil.handleResult((ResultWithStatus)result, () -> {
+                // Convert result to JSON
+                return convertToJson(result, maxPoints);
             });
         });
     }
-        
-    private Integer parseDaysBack(String daysBack) {
-        if (daysBack != null && !daysBack.trim().isEmpty()) {
+
+    /**
+     * Parse the max data points parameter
+     */
+    private Integer parseMaxDataPoints(String maxDataPoints) {
+        if (maxDataPoints != null && !maxDataPoints.trim().isEmpty()) {
             try {
-                return Integer.parseInt(daysBack.trim());
+                return Integer.parseInt(maxDataPoints.trim());
             } catch (NumberFormatException e) {
-                return HistoricalDataUtil.DEFAULT_DAYS_BACK;
+                return null; // Return all data points
             }
         }
-        return HistoricalDataUtil.DEFAULT_DAYS_BACK;
+        return null; // Return all data points
     }
 
     /**
-     * Format a list as a JSON array
+     * Convert HistoricalWeatherData to JSON string
+     *
+     * @param data The historical weather data to convert
+     * @param maxDataPoints Optional limit on the number of data points to include
+     * @return JSON string representation of the data
      */
-    private String formatList(List<?> list) {
-        if (list == null || list.isEmpty()) {
-            return "[]";
+    private String convertToJson(HistoricalWeatherData data, Integer maxDataPoints) {
+        try {
+            // Create a map to hold the data
+            Map<String, Object> jsonMap = new HashMap<>();
+            
+            // Populate the map with data
+            populateBasicFields(jsonMap, data);
+            populateOutdoorModuleData(jsonMap, data);
+            populateDataPoints(jsonMap, data, maxDataPoints);
+            
+            // Convert to JSON string
+            return objectMapper.writeValueAsString(jsonMap);
+        } catch (JsonProcessingException e) {
+            throw new WeatherApiException("Failed to serialize weather data to JSON", e, ErrorType.SERVER_ERROR);
         }
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0) {
-                sb.append(", ");
-            }
-            sb.append("\"").append(list.get(i)).append("\"");
-        }
-        sb.append("]");
-        return sb.toString();
     }
     
     /**
-     * Format a value as JSON
+     * Populate the JSON map with basic fields from the data object
      */
-    private String formatValue(Object value) {
-        if (value == null) {
-            return "null";
+    private void populateBasicFields(Map<String, Object> jsonMap, HistoricalWeatherData data) {
+        jsonMap.put("success", data.success);
+        jsonMap.put("deviceId", data.deviceId);
+        jsonMap.put("scale", data.scale);
+        jsonMap.put("sensorTypes", data.sensorTypes);
+        jsonMap.put("beginTime", data.getBeginTime());
+        jsonMap.put("endTime", data.getEndTime());
+        jsonMap.put("stepTime", data.stepTime);
+        jsonMap.put("totalDataPoints", data.totalDataPoints);
+    }
+    
+    /**
+     * Populate the JSON map with outdoor module data if available
+     */
+    private void populateOutdoorModuleData(Map<String, Object> jsonMap, HistoricalWeatherData data) {
+        if (data.outdoorModuleId == null) {
+            return;
         }
         
-        if (value instanceof List) {
-            List<?> list = (List<?>) value;
-            StringBuilder sb = new StringBuilder();
-            sb.append("{");
-            
-            if (!list.isEmpty()) {
-                sb.append("\"timestamp\": ").append(list.get(0));
-                
-                if (list.size() > 1) {
-                    sb.append(", \"temperature\": ").append(list.get(1));
-                }
-                
-                if (list.size() > 2) {
-                    sb.append(", \"humidity\": ").append(list.get(2));
-                }
-                
-                if (list.size() > 3) {
-                    sb.append(", \"pressure\": ").append(list.get(3));
-                }
-            }
-            
-            sb.append("}");
-            return sb.toString();
-        } else if (value instanceof String) {
-            return "\"" + value + "\"";
-        } else {
-            return value.toString();
+        jsonMap.put("outdoorModuleId", data.outdoorModuleId);
+        jsonMap.put("outdoorModuleName", data.outdoorModuleName);
+        
+        if (data.outdoorTemperature != null) {
+            jsonMap.put("outdoorTemperature", data.outdoorTemperature);
+        }
+        
+        if (data.outdoorHumidity != null) {
+            jsonMap.put("outdoorHumidity", data.outdoorHumidity);
         }
     }
+    
+    /**
+     * Populate the JSON map with data points, optionally limiting the number
+     */
+    private void populateDataPoints(Map<String, Object> jsonMap, HistoricalWeatherData data, Integer maxDataPoints) {
+        if (data.values == null || data.values.isEmpty()) {
+            jsonMap.put("values", Collections.emptyList());
+            return;
+        }
+        
+        List<Object> limitedValues;
+        boolean isLimited = maxDataPoints != null && maxDataPoints > 0 && maxDataPoints < data.values.size();
+        
+        if (isLimited) {
+            limitedValues = data.values.subList(0, maxDataPoints);
+            jsonMap.put("limitedDataPoints", true);
+            jsonMap.put("displayedDataPoints", maxDataPoints);
+        } else {
+            limitedValues = data.values;
+            jsonMap.put("limitedDataPoints", false);
+            jsonMap.put("displayedDataPoints", data.values.size());
+        }
+        
+        jsonMap.put("values", limitedValues);
+    }
+
+    // Removed unused methods formatList and formatValue as they are not needed
+    // with the Jackson ObjectMapper approach
 }

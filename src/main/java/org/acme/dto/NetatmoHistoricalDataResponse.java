@@ -89,48 +89,14 @@ public class NetatmoHistoricalDataResponse {
         return null;
     }
 
-    // Helper method to get measurement times and values in a more structured format
-    public HistoricalMeasurement getStructuredMeasurements() {
-        List<List<Object>> measurements = getMeasurements();
-        if (measurements != null && !measurements.isEmpty()) {
-            HistoricalMeasurement result = new HistoricalMeasurement();
-            
-            // First array typically contains timestamps
-            if (measurements.size() > 0 && measurements.get(0) instanceof List) {
-                List<Object> timestampObjects = measurements.get(0);
-                result.timestamps = timestampObjects.stream()
-                    .map(obj -> {
-                        if (obj instanceof Number) {
-                            return ((Number) obj).longValue();
-                        }
-                        return null;
-                    })
-                    .filter(val -> val != null)
-                    .toList();
-            }
-            
-            // Subsequent arrays contain sensor values
-            if (measurements.size() > 1) {
-                result.values = measurements.subList(1, measurements.size());
-            }
-            
-            return result;
-        }
-        return null;
-    }
-
-    public static class HistoricalMeasurement {
-        public List<Long> timestamps;
-        public Object values;  // Keep flexible to handle various data structures
-    }
 
     // Class to represent the properly parsed Netatmo historical data
     public static class NetatmoMeasurementData {
-        public Integer beginTime;     // beg_time from the response
-        public Integer stepTime;      // step_time from the response  
+        public Long beginTime;     // beg_time from the response
+        public Integer stepTime;      // step_time from the response
         public List<Object> values;   // value array from the response
         
-        public NetatmoMeasurementData(Integer beginTime, Integer stepTime, List<Object> values) {
+        public NetatmoMeasurementData(Long beginTime, Integer stepTime, List<Object> values) {
             this.beginTime = beginTime;
             this.stepTime = stepTime;
             this.values = values;
@@ -142,7 +108,15 @@ public class NetatmoHistoricalDataResponse {
     public NetatmoMeasurementData getParsedMeasurementData() {
         Map<String, Object> measurementData = getMeasurementData();
         if (measurementData != null) {
-            Integer beginTime = (Integer) measurementData.get("beg_time");
+            // Convert to Long to handle larger timestamps
+            Long beginTime = null;
+            Object beginTimeObj = measurementData.get("beg_time");
+            if (beginTimeObj instanceof Integer) {
+                beginTime = ((Integer) beginTimeObj).longValue();
+            } else if (beginTimeObj instanceof Long) {
+                beginTime = (Long) beginTimeObj;
+            }
+            
             Integer stepTime = (Integer) measurementData.get("step_time");
             List<Object> values = (List<Object>) measurementData.get("value");
             

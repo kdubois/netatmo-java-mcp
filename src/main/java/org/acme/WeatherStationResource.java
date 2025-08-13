@@ -69,21 +69,13 @@ public class WeatherStationResource {
             @QueryParam("module_id") String moduleId,
             @QueryParam("scale") String scale,
             @QueryParam("type") String sensorTypes,
-            @QueryParam("date_begin") Long dateBegin,
-            @QueryParam("date_end") Long dateEnd,
+            @QueryParam("date_begin") String dateBegin,
+            @QueryParam("date_end") String dateEnd,
             @QueryParam("limit") Integer limit
     ) {
         try {
-            // Calculate days back if dateBegin and dateEnd are provided
-            Integer daysBack = HistoricalDataUtil.calculateDaysBack(dateBegin, dateEnd);
-            
-            // If dateBegin and dateEnd are provided, use them directly instead of daysBack
-            if (dateBegin != null && dateEnd != null) {
-                // The WeatherService will handle the calculation of daysBack
-                daysBack = null;
-            }
-            
-            var result = weatherService.getHistoricalWeather(deviceId, moduleId, scale, sensorTypes, daysBack, limit);
+            // If dateBegin or dateEnd are not provided, they will be set to defaults in the service
+            var result = weatherService.getHistoricalWeather(deviceId, moduleId, scale, sensorTypes, dateBegin, dateEnd, limit);
             
             if (!result.success) {
                 return ApiResponse.error(result.errorMessage, Response.Status.INTERNAL_SERVER_ERROR).toResponse();
