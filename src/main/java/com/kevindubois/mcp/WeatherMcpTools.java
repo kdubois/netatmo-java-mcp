@@ -1,4 +1,4 @@
-package org.acme.mcp;
+package com.kevindubois.mcp;
 
 import io.quarkiverse.mcp.server.TextContent;
 import io.quarkiverse.mcp.server.Tool;
@@ -9,8 +9,8 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 
-import org.acme.dto.ApiResponse;
-import org.acme.service.WeatherService;
+import com.kevindubois.dto.ApiResponse;
+import com.kevindubois.service.WeatherService;
 
 @Singleton
 public class WeatherMcpTools {

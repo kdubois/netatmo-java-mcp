@@ -1,9 +1,8 @@
-package org.acme.dto;
+package com.kevindubois.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
-import java.util.Map;
 
 public class NetatmoStationsDataResponse extends BaseResult {
     @JsonProperty("body")

@@ -1,10 +1,10 @@
-package org.acme.exception;
+package com.kevindubois.exception;
 
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
-import org.acme.dto.ApiResponse;
+import com.kevindubois.dto.ApiResponse;
 
 import java.util.logging.Logger;
 

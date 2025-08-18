@@ -1,4 +1,4 @@
-package org.acme.service;
+package com.kevindubois.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 

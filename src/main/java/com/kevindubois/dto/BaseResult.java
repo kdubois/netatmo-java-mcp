@@ -1,4 +1,4 @@
-package org.acme.dto;
+package com.kevindubois.dto;
 
 /**
  * Simple base class for service layer results

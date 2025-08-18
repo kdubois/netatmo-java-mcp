@@ -1,4 +1,4 @@
-package org.acme.exception;
+package com.kevindubois.exception;
 
 import jakarta.ws.rs.core.Response;
 

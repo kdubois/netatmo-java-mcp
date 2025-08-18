@@ -1,4 +1,4 @@
-package org.acme;
+package com.kevindubois;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -8,9 +8,9 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import org.acme.service.WeatherService;
-import org.acme.dto.ApiResponse;
-import org.acme.exception.WeatherApiException;
+import com.kevindubois.service.WeatherService;
+import com.kevindubois.dto.ApiResponse;
+import com.kevindubois.exception.WeatherApiException;
 
 import java.util.logging.Logger;
 

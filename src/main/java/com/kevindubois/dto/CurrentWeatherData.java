@@ -1,4 +1,4 @@
-package org.acme.dto;
+package com.kevindubois.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

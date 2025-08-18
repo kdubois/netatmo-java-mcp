@@ -1,11 +1,11 @@
-package org.acme.filter;
+package com.kevindubois.filter;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.ClientRequestContext;
 import jakarta.ws.rs.client.ClientRequestFilter;
 import jakarta.ws.rs.ext.Provider;
 
-import org.acme.service.NetatmoAuthService;
+import com.kevindubois.service.NetatmoAuthService;
 
 import java.util.logging.Logger;
 

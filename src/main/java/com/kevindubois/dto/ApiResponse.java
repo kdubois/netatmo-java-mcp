@@ -1,4 +1,4 @@
-package org.acme.dto;
+package com.kevindubois.dto;
 
 import jakarta.ws.rs.core.Response;
 import io.quarkiverse.mcp.server.TextContent;

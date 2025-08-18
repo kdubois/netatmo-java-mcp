@@ -1,4 +1,4 @@
-package org.acme.dto;
+package com.kevindubois.dto;
 
 /**
  * Result class for current weather data

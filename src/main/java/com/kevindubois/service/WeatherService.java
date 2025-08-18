@@ -1,12 +1,12 @@
-package org.acme.service;
+package com.kevindubois.service;
 
+import com.kevindubois.dto.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
-import org.acme.client.NetatmoApiClient;
-import org.acme.dto.*;
-import org.acme.exception.WeatherApiException;
-import org.acme.util.WeatherUtil;
+import com.kevindubois.client.NetatmoApiClient;
+import com.kevindubois.exception.WeatherApiException;
+import com.kevindubois.util.WeatherUtil;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.ArrayList;

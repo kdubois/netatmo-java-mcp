@@ -1,7 +1,7 @@
-package org.acme.dto;
+package com.kevindubois.dto;
 
 import java.util.List;
-import org.acme.util.WeatherUtil;
+import com.kevindubois.util.WeatherUtil;
 
 /**
  * DTO for historical weather data

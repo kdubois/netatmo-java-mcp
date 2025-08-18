@@ -1,25 +1,19 @@
-package org.acme;
+package com.kevindubois;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.acme.dto.ApiResponse;
-import org.acme.dto.CurrentWeatherData;
-import org.acme.dto.DeviceInfo;
-import org.acme.service.WeatherService;
+import com.kevindubois.dto.ApiResponse;
+import com.kevindubois.dto.CurrentWeatherData;
+import com.kevindubois.service.WeatherService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest

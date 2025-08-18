@@ -1,4 +1,4 @@
-package org.acme.dto;
+package com.kevindubois.dto;
 
 import java.util.List;
 

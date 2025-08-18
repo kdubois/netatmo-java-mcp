@@ -1,4 +1,4 @@
-package org.acme.client;
+package com.kevindubois.client;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -6,9 +6,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
-import org.acme.dto.NetatmoStationsDataResponse;
-import org.acme.dto.NetatmoHistoricalDataResponse;
-import org.acme.filter.NetatmoAuthFilter;
+import com.kevindubois.dto.NetatmoStationsDataResponse;
+import com.kevindubois.dto.NetatmoHistoricalDataResponse;
+import com.kevindubois.filter.NetatmoAuthFilter;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
