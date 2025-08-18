@@ -5,7 +5,6 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
 import org.acme.dto.ApiResponse;
-import org.acme.exception.WeatherApiException.ErrorType;
 
 import java.util.logging.Logger;
 
@@ -21,31 +20,6 @@ public class WeatherApiExceptionMapper implements ExceptionMapper<WeatherApiExce
     @Override
     public Response toResponse(WeatherApiException exception) {
         logger.severe("Weather API error: " + exception.getMessage());
-        
-        Response.Status status = mapErrorTypeToStatus(exception.getErrorType());
-        
-        return ApiResponse.error(exception.getMessage(), status).toResponse();
-    }
-    
-    /**
-     * Maps error types to HTTP status codes
-     * 
-     * @param errorType The error type
-     * @return The corresponding HTTP status
-     */
-    private Response.Status mapErrorTypeToStatus(ErrorType errorType) {
-        switch (errorType) {
-            case AUTHENTICATION_ERROR:
-                return Response.Status.UNAUTHORIZED;
-            case NOT_FOUND:
-                return Response.Status.NOT_FOUND;
-            case INVALID_PARAMETERS:
-                return Response.Status.BAD_REQUEST;
-            case API_ERROR:
-                return Response.Status.BAD_GATEWAY;
-            case SERVER_ERROR:
-            default:
-                return Response.Status.INTERNAL_SERVER_ERROR;
-        }
+        return ApiResponse.error(exception.getMessage(), exception.getStatus()).toResponse();
     }
 }

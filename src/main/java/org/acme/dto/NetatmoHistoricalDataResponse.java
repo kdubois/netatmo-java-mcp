@@ -7,47 +7,45 @@ import java.util.Map;
 
 public class NetatmoHistoricalDataResponse {
     @JsonProperty("body")
-    private Object body;
+    private final Object body;
     
     @JsonProperty("status")
-    private String status;
+    private final String status;
 
     @JsonProperty("time_exec")
-    private Double timeExec;
+    private final Double timeExec;
 
     @JsonProperty("time_server")
-    private Long timeServer;
+    private final Long timeServer;
+    
+    /**
+     * Constructor for deserialization by Jackson
+     */
+    public NetatmoHistoricalDataResponse(
+            @JsonProperty("body") Object body,
+            @JsonProperty("status") String status,
+            @JsonProperty("time_exec") Double timeExec,
+            @JsonProperty("time_server") Long timeServer) {
+        this.body = body;
+        this.status = status;
+        this.timeExec = timeExec;
+        this.timeServer = timeServer;
+    }
 
     public Object getBody() {
         return body;
-    }
-
-    public void setBody(Object body) {
-        this.body = body;
     }
 
     public String getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public Double getTimeExec() {
         return timeExec;
     }
 
-    public void setTimeExec(Double timeExec) {
-        this.timeExec = timeExec;
-    }
-
     public Long getTimeServer() {
         return timeServer;
-    }
-
-    public void setTimeServer(Long timeServer) {
-        this.timeServer = timeServer;
     }
 
     // Helper method to extract measurement data

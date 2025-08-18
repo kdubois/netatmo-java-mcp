@@ -114,15 +114,9 @@ The application is configured via `application.properties`:
 ```properties
 # Netatmo API Configuration
 netatmo.api.base.url=https://api.netatmo.com
-
-# OAuth2 Configuration for Netatmo
-quarkus.oidc-client.netatmo.auth-server-url=${netatmo.api.base.url}/oauth2
-quarkus.oidc-client.netatmo.client-id=YOUR_CLIENT_ID
-quarkus.oidc-client.netatmo.client-secret=YOUR_CLIENT_SECRET
-quarkus.oidc-client.netatmo.credentials.secret=YOUR_CLIENT_SECRET
-quarkus.oidc-client.netatmo.grant.type=refresh_token
-quarkus.oidc-client.netatmo.refresh-token=YOUR_REFRESH_TOKEN
-quarkus.oidc-client.netatmo.scopes=read_station
+netatmo.api.client-id=YOUR_CLIENT_ID
+netatmo.api.client-secret=YOUR_CLIENT_SECRET
+netatmo.api.refresh-token=YOUR_REFRESH_TOKEN
 
 # REST Client Configuration
 quarkus.rest-client.netatmo-api.url=${netatmo.api.base.url}

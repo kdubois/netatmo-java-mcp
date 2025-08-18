@@ -11,7 +11,7 @@ import jakarta.ws.rs.core.Response;
 import org.acme.service.WeatherService;
 import org.acme.dto.ApiResponse;
 import org.acme.exception.WeatherApiException;
-import org.acme.util.HistoricalDataUtil;
+
 import java.util.logging.Logger;
 
 @Path("/weather")
@@ -36,10 +36,9 @@ public class WeatherStationResource {
             var data = weatherService.fetchAllStations();
             return ApiResponse.success(data, "Successfully retrieved all stations data").toResponse();
         } catch (WeatherApiException e) {
-            return ApiResponse.error(e.getMessage(), Response.Status.fromStatusCode(e.getErrorType().ordinal() + 400)).toResponse();
+            return ApiResponse.error(e.getMessage(), e.getStatus()).toResponse();
         } catch (Exception e) {
-            return ApiResponse.error("Error retrieving weather station data: " + e.getMessage(), 
-                                    Response.Status.INTERNAL_SERVER_ERROR).toResponse();
+            return ApiResponse.serverError("Error retrieving weather station data: " + e.getMessage()).toResponse();
         }
     }
 
@@ -50,14 +49,13 @@ public class WeatherStationResource {
         try {
             var result = weatherService.getCurrentWeather();
             
-            if (!result.success) {
-                return ApiResponse.error(result.errorMessage, Response.Status.INTERNAL_SERVER_ERROR).toResponse();
+            if (!result.isSuccess()) {
+                return result.toResponse();
             }
             
-            return ApiResponse.success(result.data, "Successfully retrieved current weather data").toResponse();
+            return ApiResponse.success(result.getData(), "Successfully retrieved current weather data").toResponse();
         } catch (Exception e) {
-            return ApiResponse.error("Error retrieving current weather data: " + e.getMessage(), 
-                                    Response.Status.INTERNAL_SERVER_ERROR).toResponse();
+            return ApiResponse.serverError("Error retrieving current weather data: " + e.getMessage()).toResponse();
         }
     }
 
@@ -74,19 +72,15 @@ public class WeatherStationResource {
             @QueryParam("limit") Integer limit
     ) {
         try {
-            // If dateBegin or dateEnd are not provided, they will be set to defaults in the service
             var result = weatherService.getHistoricalWeather(deviceId, moduleId, scale, sensorTypes, dateBegin, dateEnd, limit);
             
-            if (!result.success) {
-                return ApiResponse.error(result.errorMessage, Response.Status.INTERNAL_SERVER_ERROR).toResponse();
+            if (!result.isSuccess()) {
+                return result.toResponse();
             }
             
-            return ApiResponse.success(result, "Successfully retrieved historical weather data").toResponse();
-        } catch (WeatherApiException e) {
-            return ApiResponse.error(e.getMessage(), Response.Status.fromStatusCode(e.getErrorType().ordinal() + 400)).toResponse();
+            return ApiResponse.success(result.getData(), "Successfully retrieved historical weather data").toResponse();
         } catch (Exception e) {
-            return ApiResponse.error("Error retrieving historical weather data: " + e.getMessage(), 
-                                    Response.Status.INTERNAL_SERVER_ERROR).toResponse();
+            return ApiResponse.serverError("Error retrieving historical weather data: " + e.getMessage()).toResponse();
         }
     }
 
@@ -97,14 +91,13 @@ public class WeatherStationResource {
         try {
             var result = weatherService.getAvailableDevices();
             
-            if (!result.success) {
-                return ApiResponse.error(result.errorMessage, Response.Status.INTERNAL_SERVER_ERROR).toResponse();
+            if (!result.isSuccess()) {
+                return result.toResponse();
             }
             
-            return ApiResponse.success(result.devices, "Successfully retrieved available devices").toResponse();
+            return ApiResponse.success(result.getData(), "Successfully retrieved available devices").toResponse();
         } catch (Exception e) {
-            return ApiResponse.error("Error retrieving available devices: " + e.getMessage(), 
-                                    Response.Status.INTERNAL_SERVER_ERROR).toResponse();
+            return ApiResponse.serverError("Error retrieving available devices: " + e.getMessage()).toResponse();
         }
     }
 }

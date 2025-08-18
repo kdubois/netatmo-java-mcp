@@ -1,62 +1,65 @@
 package org.acme.dto;
 
-import org.acme.util.ResponseUtil.ResultWithStatus;
-
 /**
- * Base class for all API result objects
- * Provides common success/error handling functionality
+ * Simple base class for service layer results
  */
-public class BaseResult implements ResultWithStatus {
-    public boolean success;
-    public String errorMessage;
-    
-    /**
-     * Default constructor - initializes with success=false
-     */
+public class BaseResult {
+    protected boolean success;
+    protected String errorMessage;
+
     public BaseResult() {
         this.success = false;
     }
     
-    /**
-     * Sets this result as successful
-     * @return this object for method chaining
-     */
+    // For backward compatibility
     public BaseResult withSuccess() {
         this.success = true;
         this.errorMessage = null;
         return this;
     }
     
-    /**
-     * Sets this result as failed with the given error message
-     * @param message The error message
-     * @return this object for method chaining
-     */
     public BaseResult withError(String message) {
         this.success = false;
         this.errorMessage = message;
         return this;
     }
     
-    /**
-     * Sets this result as failed with the given exception
-     * @param e The exception that caused the failure
-     * @return this object for method chaining
-     */
     public BaseResult withError(Exception e) {
         this.success = false;
         this.errorMessage = e.getMessage();
         return this;
     }
     
-    @Override
+    // Static factory methods
+    public static BaseResult success() {
+        BaseResult result = new BaseResult();
+        result.success = true;
+        return result;
+    }
+    
+    public static BaseResult error(String message) {
+        BaseResult result = new BaseResult();
+        result.success = false;
+        result.errorMessage = message;
+        return result;
+    }
+    
+    // Getters and setters
     public boolean isSuccess() {
         return success;
     }
     
-    @Override
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+    
     public String getErrorMessage() {
         return errorMessage;
     }
+    
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
 }
+
 
