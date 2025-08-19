@@ -1,9 +1,12 @@
 package com.kevindubois.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 import java.util.List;
 
+@RegisterForReflection
 public class NetatmoStationsDataResponse extends BaseResult {
     @JsonProperty("body")
     private final Body body;
@@ -20,6 +23,7 @@ public class NetatmoStationsDataResponse extends BaseResult {
     /**
      * Constructor for deserialization by Jackson
      */
+    @JsonCreator
     public NetatmoStationsDataResponse(
             @JsonProperty("body") Body body,
             @JsonProperty("status") String status,
@@ -50,10 +54,12 @@ public class NetatmoStationsDataResponse extends BaseResult {
     /**
      * Body class for Netatmo stations data response
      */
+    @RegisterForReflection
     public static class Body {
         @JsonProperty("devices")
         private final List<WeatherStation> devices;
 
+        @JsonCreator
         public Body(@JsonProperty("devices") List<WeatherStation> devices) {
             this.devices = devices;
         }
@@ -66,6 +72,7 @@ public class NetatmoStationsDataResponse extends BaseResult {
     /**
      * Weather station device class
      */
+    @RegisterForReflection
     public static class WeatherStation {
         @JsonProperty("_id")
         private final String id;
@@ -85,6 +92,7 @@ public class NetatmoStationsDataResponse extends BaseResult {
         @JsonProperty("modules")
         private final List<Module> modules;
         
+        @JsonCreator
         public WeatherStation(
                 @JsonProperty("_id") String id,
                 @JsonProperty("station_name") String stationName,
@@ -128,6 +136,7 @@ public class NetatmoStationsDataResponse extends BaseResult {
     /**
      * Module class for weather station modules
      */
+    @RegisterForReflection
     public static class Module {
         @JsonProperty("_id")
         private final String id;
@@ -144,6 +153,7 @@ public class NetatmoStationsDataResponse extends BaseResult {
         @JsonProperty("dashboard_data")
         private final DashboardData dashboardData;
         
+        @JsonCreator
         public Module(
                 @JsonProperty("_id") String id,
                 @JsonProperty("module_name") String moduleName,
@@ -181,6 +191,7 @@ public class NetatmoStationsDataResponse extends BaseResult {
     /**
      * Dashboard data class for weather measurements
      */
+    @RegisterForReflection
     public static class DashboardData {
         @JsonProperty("Temperature")
         private final Double temperature;
@@ -206,6 +217,7 @@ public class NetatmoStationsDataResponse extends BaseResult {
         @JsonProperty("max_temp")
         private final Double maxTemp;
         
+        @JsonCreator
         public DashboardData(
                 @JsonProperty("Temperature") Double temperature,
                 @JsonProperty("Humidity") Integer humidity,

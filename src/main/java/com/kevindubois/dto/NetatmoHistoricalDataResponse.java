@@ -1,10 +1,13 @@
 package com.kevindubois.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 import java.util.List;
 import java.util.Map;
 
+@RegisterForReflection
 public class NetatmoHistoricalDataResponse {
     @JsonProperty("body")
     private final Object body;
@@ -21,6 +24,7 @@ public class NetatmoHistoricalDataResponse {
     /**
      * Constructor for deserialization by Jackson
      */
+    @JsonCreator
     public NetatmoHistoricalDataResponse(
             @JsonProperty("body") Object body,
             @JsonProperty("status") String status,

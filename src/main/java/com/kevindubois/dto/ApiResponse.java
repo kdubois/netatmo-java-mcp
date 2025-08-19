@@ -2,15 +2,28 @@ package com.kevindubois.dto;
 
 import jakarta.ws.rs.core.Response;
 import io.quarkiverse.mcp.server.TextContent;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * Generic API response wrapper for consistent response format
  * @param <T> The type of data contained in the response
  */
+@RegisterForReflection
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
+    @JsonProperty("success")
     private final boolean success;
+    
+    @JsonProperty("message")
     private final String message;
+    
+    @JsonProperty("data")
     private final T data;
+    
+    @JsonProperty("status")
     private final int status;
 
     /**
@@ -23,7 +36,12 @@ public class ApiResponse<T> {
     /**
      * Constructor with all fields
      */
-    public ApiResponse(boolean success, String message, T data, int status) {
+    @JsonCreator
+    public ApiResponse(
+            @JsonProperty("success") boolean success, 
+            @JsonProperty("message") String message, 
+            @JsonProperty("data") T data, 
+            @JsonProperty("status") int status) {
         this.success = success;
         this.message = message;
         this.data = data;
@@ -115,9 +133,17 @@ public class ApiResponse<T> {
     }
 
     // Getters
+    @JsonProperty("success")
     public boolean isSuccess() { return success; }
+    
+    @JsonProperty("message")
     public String getMessage() { return message; }
+    
+    @JsonProperty("data")
     public T getData() { return data; }
+    
+    @JsonProperty("status")
     public int getStatus() { return status; }
+    
     public String getErrorMessage() { return !success ? message : null; }
 }
