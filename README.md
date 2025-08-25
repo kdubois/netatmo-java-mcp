@@ -1,4 +1,4 @@
-# Netatmo Weather Station API
+# Netatmo Weather Station MCP Server (and optional JSON REST endpoint as well)
 
 A Quarkus REST AND MCP Server that connects to the Netatmo Weather Station API and retrieves weather data.
 
