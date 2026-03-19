@@ -12,12 +12,8 @@ import com.kevindubois.service.WeatherService;
 import com.kevindubois.dto.ApiResponse;
 import com.kevindubois.exception.WeatherApiException;
 
-import java.util.logging.Logger;
-
 @Path("/weather")
 public class WeatherStationResource {
-
-    private static final Logger logger = Logger.getLogger(WeatherStationResource.class.getName());
 
     @Inject
     WeatherService weatherService;
