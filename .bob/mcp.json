@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "quarkus-dev-mcp": {
+      "type": "streamable-http",
+      "url": "http://localhost:8091/q/dev-mcp"
+    }
+  }
+}
