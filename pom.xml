@@ -13,7 +13,7 @@
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.34.5</quarkus.platform.version>
-        <quarkus.mcp.version>1.10.3</quarkus.mcp.version>
+        <quarkus.mcp.version>2.0.0.CR1</quarkus.mcp.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
         <jacoco.version>0.8.14</jacoco.version>
@@ -93,6 +93,17 @@
             <groupId>io.quarkiverse.mcp</groupId>
             <artifactId>quarkus-mcp-server-http</artifactId>
             <version>${quarkus.mcp.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.mcp</groupId>
+            <artifactId>quarkus-mcp-server-hibernate-validator</artifactId>
+            <version>${quarkus.mcp.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.mcp</groupId>
+            <artifactId>quarkus-mcp-server-test</artifactId>
+            <version>${quarkus.mcp.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
