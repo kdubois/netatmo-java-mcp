@@ -5,6 +5,7 @@ import io.quarkiverse.mcp.server.McpServer;
 import io.quarkiverse.mcp.server.Tool;
 import io.quarkiverse.mcp.server.Tool.Annotations;
 import io.quarkiverse.mcp.server.WrapBusinessError;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -13,6 +14,7 @@ import com.kevindubois.service.WeatherService;
 @Singleton
 @McpServer("admin")
 @WrapBusinessError
+@RolesAllowed("admin")
 public class AdminMcpTools {
 
     @Inject

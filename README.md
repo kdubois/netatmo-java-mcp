@@ -1,241 +1,92 @@
-# Netatmo Weather Station MCP Server (and optional JSON REST endpoint as well)
+# Netatmo Weather Station MCP Server
 
-A Quarkus REST AND MCP Server that connects to the Netatmo Weather Station API and retrieves weather data.
+Quarkus MCP Server that connects to the Netatmo Weather Station API. Also exposes REST endpoints.
 
-## Features
+## MCP Server
 
-- Model Context Protocol (MCP) tools for AI assistants
-- RESTful endpoints to retrieve weather station data
-- JSON response models for all Netatmo API data structures
-- Support for retrieving data from all stations or specific devices
-- Historical weather data with flexible parameters
-- OAuth2 authentication with Netatmo API using refresh tokens
+### Endpoints
 
-## Model Context Protocol (MCP) Server
+| Endpoint | Protocol | Auth |
+|----------|----------|------|
+| `/mcp` | Streamable HTTP (2025-03-26) | None |
+| `/admin/mcp` | Streamable HTTP (2025-03-26) | OIDC (admin role) |
 
-This application exposes weather data as MCP tools that can be used by AI assistants and other MCP clients.
+### Tools
 
-### MCP Endpoints
+| Tool | Description | Server |
+|------|-------------|--------|
+| `get_current_weather` | Current indoor/outdoor temperature, humidity, pressure, CO2, noise | public |
+| `get_available_devices` | List devices with IDs, names, types | public |
+| `get_historical_weather` | Historical data with auto-scaling and daily high/low support | public |
+| `refreshStationData` | Force refresh of station data cache | admin |
+| `getStationDiagnostics` | Station health and connectivity diagnostics | admin |
 
-- **Main MCP endpoint**: `http://localhost:8080/mcp` (Streamable HTTP - 2025-03-26 protocol)
-- **SSE endpoint**: `http://localhost:8080/mcp/sse` (HTTP/SSE - 2024-11-05 protocol)
+### Resources
 
-### Available MCP Tools
+| URI | Description |
+|-----|-------------|
+| `weather:///current` | Current weather as JSON |
+| `weather:///devices` | Device list as JSON |
+| `weather:///{deviceId}/current` | Device-specific weather (template) |
 
-#### `get_current_weather`
+### Prompts
 
-Gets current weather data from the Netatmo weather station.
+| Name | Description |
+|------|-------------|
+| `weather_summary` | Generate a weather summary for all devices |
+| `weather_comparison` | Compare weather across a date range |
+| `device_diagnostics` | Diagnose a specific device (with auto-completion) |
 
-- Returns temperature, humidity, pressure, CO2, noise levels
-- Includes both indoor and outdoor measurements
-- Returns data in JSON format
+### Key Features
 
-#### `get_available_devices`
+- **Tool annotations**: readOnlyHint, idempotentHint, destructiveHint, openWorldHint
+- **Progress notifications**: Historical data tool reports progress
+- **Validation**: `@Pattern` on date/scale parameters via Hibernate Validator
+- **Error handling**: `@WrapBusinessError` + `ToolCallException` for structured errors
+- **Smart defaults**: Auto-selects scale (daily for >7d) and sensor types (min_temp/max_temp for daily+)
+- **Data capping**: Default 24 data points max to prevent LLM context overflow
 
-Lists all available Netatmo weather station devices.
+### MCP Explorer UI
 
-- Shows device IDs, station names, types, and supported data types
-- Useful for getting device IDs for historical data requests
-- Returns data in JSON format
+A visual dashboard at `/explorer.html` for interacting with the MCP server directly from the browser. Has tabs for Tools, Resources, Prompts, and Admin (with Keycloak token acquisition).
 
-#### `get_historical_weather`
+## Authentication & Authorization
 
-Gets historical weather data from the Netatmo weather station.
+Uses OIDC with Keycloak Dev Services (auto-starts in dev mode):
+- `alice/alice` → admin + user roles
+- `bob/bob` → user role only
 
-- **Parameters:**
-  - `deviceId` (optional): Device ID, uses first device if not provided
-  - `scale` (optional): Data granularity (30min, 1hour, 3hours, 1day, 1week, 1month), default: 1hour
-  - `sensorTypes` (optional): Comma-separated sensor types (Temperature,Humidity,Pressure,CO2,Noise), default: Temperature,Humidity,Pressure
-  - `beginDate` (optional): Begin date in format YYYY-MM-DD, default: 7 days ago
-  - `endDate` (optional): End date in format YYYY-MM-DD, default: current date
-  - `maxDataPoints` (optional): Maximum number of data points to return, default: all
-- Returns data in JSON format
-
-### Using MCP Tools
-
-MCP tools can be used by:
-
-- AI assistants (Claude, GPT, etc.) that support MCP
-- MCP clients and inspectors
-- Custom applications using MCP protocol
-
-Example MCP client usage:
-
-```bash
-# Connect to the MCP server
-curl -X POST http://localhost:8080/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "get_current_weather"}}'
-```
+The admin MCP server at `/admin/mcp` requires a bearer token with the `admin` role.
 
 ## REST Endpoints
 
-### Get All Weather Stations Data
-
-```http
-GET /weather/stations
-```
-
-Returns complete weather station data including all devices and modules.
-
-### Get Current Weather Data
-
-```http
-GET /weather/current
-```
-
-Returns simplified current weather data (temperature, humidity, pressure, CO2, noise) from the first station.
-
-### Get Available Devices
-
-```http
-GET /weather/devices
-```
-
-Returns a list of available weather station devices with their IDs, names, types, and supported data types. Use this to get device IDs for historical data requests.
-
-### Get Historical Weather Data
-
-```http
-GET /weather/historical
-```
-
-Returns historical weather data. If no device_id is provided, automatically uses the first available device. Supports query parameters:
-
-- `device_id` (optional): Specific device ID. If not provided, uses the first available device.
-- `module_id` (optional): Specific module ID
-- `scale` (optional): Data granularity (30min, 1hour, 3hours, 1day, 1week, 1month). Default: 1hour
-- `type` (optional): Sensor types (Temperature, Humidity, Pressure, CO2, Noise, Rain, WindStrength, WindAngle, GustStrength, GustAngle). Default: Temperature,Humidity,Pressure
-- `date_begin` (optional): Unix timestamp or ISO date (YYYY-MM-DD) for start date. Default: 7 days ago
-- `date_end` (optional): Unix timestamp or ISO date (YYYY-MM-DD) for end date. Default: now
-- `limit` (optional): Maximum number of data points. Default: 1024
-
-### Health Check
-
-```http
-GET /weather
-```
-
-Returns a simple status message.
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/weather/stations` | All station data |
+| GET | `/weather/current` | Current weather |
+| GET | `/weather/devices` | Device list |
+| GET | `/weather/historical` | Historical data (query params: device_id, scale, type, date_begin, date_end, limit) |
 
 ## Configuration
 
-The application is configured via environment variables:
-
+Required env vars (put in `.env` file):
 ```properties
-# Netatmo API Configuration
-NETATMO_API_BASE_URL=https://api.netatmo.com
-NETATMO_API_CLIENT_ID=YOUR_CLIENT_ID
-NETATMO_API_CLIENT_SECRET=YOUR_CLIENT_SECRET
-NETATMO_API_REFRESH_TOKEN=YOUR_REFRESH_TOKEN
+NETATMO_API_CLIENT_ID=<from Netatmo Connect>
+NETATMO_API_CLIENT_SECRET=<from Netatmo Connect>
+NETATMO_API_REFRESH_TOKEN=<OAuth2 refresh token>
 ```
 
-These are referenced in `application.properties`:
-
-```properties
-# Netatmo API Configuration
-netatmo.api.base.url=${NETATMO_API_BASE_URL}
-netatmo.api.client-id=${NETATMO_API_CLIENT_ID}
-netatmo.api.client-secret=${NETATMO_API_CLIENT_SECRET}
-netatmo.api.refresh-token=${NETATMO_API_REFRESH_TOKEN}
-
-# REST Client Configuration
-quarkus.rest-client.netatmo-api.url=${netatmo.api.base.url}
-quarkus.rest-client.netatmo-api.scope=jakarta.inject.Singleton
-
-# MCP Server Configuration
-quarkus.mcp.server.traffic-logging.enabled=true
-quarkus.mcp.server.traffic-logging.text-limit=1000
-quarkus.mcp.server.sse.root-path=mcp
-```
-
-## Setup Requirements
-
-1. **Netatmo Developer Account**: Create an application at [Netatmo Connect](https://dev.netatmo.com/)
-2. **OAuth2 Credentials**: Obtain `client_id`, `client_secret`, and `refresh_token`
-3. **Weather Station**: Have a registered Netatmo weather station
-4. **Environment Variables**: Set the required environment variables. Recommended is to put them in a .env file, then you can use it to create a Kubernetes secret as such:
-
-        kubectl create secret generic netatmo --from-env-file=./.env
-        
-
-## Authentication Flow
-
-This application uses OAuth2 refresh token authentication. The refresh token is used to automatically obtain access tokens for API calls without requiring user interaction.
-
-## Data Models
-
-The application includes comprehensive DTOs for:
-
-- `ApiResponse` - Generic response wrapper for consistent formatting
-- `NetatmoStationsDataResponse` - Main API response wrapper
-- `CurrentWeatherData` - Simplified current weather data
-- `HistoricalWeatherData` - Historical weather measurements
-- `DeviceInfo` - Weather station device information
-- `BaseResult` - Base class for result objects
-
-## Example Response
-
-```json
-{
-  "success": true,
-  "message": "Successfully retrieved current weather data",
-  "data": {
-    "temperature": 22.5,
-    "humidity": 65,
-    "pressure": 1013.2,
-    "co2": 456,
-    "noise": 42,
-    "stationName": "Home Weather Station",
-    "timeUtc": 1640995200
-  },
-  "status": 200
-}
-```
-
-## Running the Application
+## Running
 
 ```bash
-# Set environment variables
-export NETATMO_API_BASE_URL=https://api.netatmo.com
-export NETATMO_API_CLIENT_ID=your_client_id
-export NETATMO_API_CLIENT_SECRET=your_client_secret
-export NETATMO_API_REFRESH_TOKEN=your_refresh_token
-
-# Development mode
-./mvnw quarkus:dev
-
-# Package and run
-./mvnw package
-java -jar target/quarkus-app/quarkus-run.jar
-```
-
-## Container Support
-
-The application includes container support with several Dockerfile options (in src/main/docker):
-
-```bash
-# Build using the Quarkus CLI:
-quarkus image build
-
-# Build using mvn and native compilation:
-quarkus image build --native
-
-# Build using docker, in JVM mode
-docker build -f src/main/docker/Dockerfile.jvm -t quarkus/netatmo .
-
-# Run the container
-docker run -i --rm -p 8080:8080 \
-  -e NETATMO_API_BASE_URL=https://api.netatmo.com \
-  -e NETATMO_API_CLIENT_ID=your_client_id \
-  -e NETATMO_API_CLIENT_SECRET=your_client_secret \
-  -e NETATMO_API_REFRESH_TOKEN=your_refresh_token \
-  quarkus/netatmo
+./mvnw quarkus:dev    # Dev mode, port 8091, Keycloak Dev Services auto-start
+./mvnw package        # Build
 ```
 
 ## Dependencies
 
-- Quarkus REST with Jackson
-- Quarkus OIDC Client for OAuth2 authentication
-- Quarkus REST Client for HTTP calls
-- Quarkus MCP Server for Model Context Protocol support
+- Quarkus MCP Server 2.0.0.CR1
+- Quarkus MCP Server Hibernate Validator
+- Quarkus MCP Server Test (McpAssured)
+- Quarkus OIDC + Keycloak Dev Services
+- Quarkus REST Client (Netatmo API)

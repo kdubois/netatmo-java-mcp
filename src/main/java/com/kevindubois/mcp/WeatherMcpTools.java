@@ -12,6 +12,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.Pattern;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -67,8 +69,10 @@ public class WeatherMcpTools {
         return ApiResponse.success(apiResponse.getData(), "Successfully retrieved available devices").toTextContent();
     }
 
+    private static final int DEFAULT_MAX_DATA_POINTS = 24;
+
     @Tool(name = "get_historical_weather",
-          description = "Get historical weather data from Netatmo weather station for a specified date range. Returns timestamped measurements in JSON format.",
+          description = "Get historical weather data from Netatmo weather station for a specified date range. Returns timestamped measurements in JSON format. Data is automatically summarized for large ranges (daily aggregates for >7 days, capped at 24 data points by default).",
           annotations = @Annotations(
               title = "Historical Weather",
               readOnlyHint = true,
@@ -78,27 +82,29 @@ public class WeatherMcpTools {
     public TextContent getHistoricalWeather(
             @ToolArg(description = "Device ID (optional, uses first available device if not provided)", required = false) String deviceId,
             @Pattern(regexp = "(30min|1hour|3hours|1day|1week|1month)?", message = "Scale must be one of: 30min, 1hour, 3hours, 1day, 1week, 1month")
-            @ToolArg(description = "Scale: 30min, 1hour, 3hours, 1day, 1week, 1month (default: 1hour)", required = false) String scale,
-            @ToolArg(description = "Sensor types comma-separated: Temperature,Humidity,Pressure,CO2,Noise (default: Temperature,Humidity,Pressure)", required = false) String sensorTypes,
+            @ToolArg(description = "Scale: 30min, 1hour, 3hours, 1day, 1week, 1month (default: auto-selected based on date range)", required = false) String scale,
+            @ToolArg(description = "Sensor types comma-separated. Available: Temperature,min_temp,max_temp,Humidity,min_hum,max_hum,Pressure,CO2,Noise. For daily/weekly scale use min_temp,max_temp to get daily highs/lows. Default: auto-selected based on scale.", required = false) String sensorTypes,
             @Pattern(regexp = "(\\d{4}-\\d{2}-\\d{2})?", message = "Begin date must be in format YYYY-MM-DD")
             @ToolArg(description = "Begin date in format YYYY-MM-DD (default: 7 days ago)", required = false) String beginDate,
             @Pattern(regexp = "(\\d{4}-\\d{2}-\\d{2})?", message = "End date must be in format YYYY-MM-DD")
             @ToolArg(description = "End date in format YYYY-MM-DD (default: current date)", required = false) String endDate,
-            @ToolArg(description = "Maximum number of data points to return (default: all)", required = false) String maxDataPoints,
+            @ToolArg(description = "Maximum number of data points to return (default: 24)", required = false) String maxDataPoints,
             Progress progress,
             McpLog log
     ) {
         log.info("Requesting historical weather data");
 
         final Integer maxPoints = parseMaxDataPoints(maxDataPoints);
+        String effectiveScale = autoSelectScale(scale, beginDate, endDate);
+        String effectiveSensorTypes = autoSelectSensorTypes(sensorTypes, effectiveScale);
 
         sendProgress(progress, "Resolving device and querying Netatmo API", 0);
 
         var apiResponse = weatherService.getHistoricalWeather(
             deviceId,
             null,
-            scale,
-            sensorTypes,
+            effectiveScale,
+            effectiveSensorTypes,
             beginDate,
             endDate,
             null
@@ -111,14 +117,12 @@ public class WeatherMcpTools {
         sendProgress(progress, "Processing results", 70);
 
         Map<String, Object> data = apiResponse.getData();
-
-        if (maxPoints != null && maxPoints > 0) {
-            limitDataPoints(data, maxPoints);
-        }
+        int limit = (maxPoints != null && maxPoints > 0) ? maxPoints : DEFAULT_MAX_DATA_POINTS;
+        limitDataPoints(data, limit);
 
         sendProgress(progress, "Complete", 100);
 
-        log.info("Retrieved %d data points", data.getOrDefault("totalDataPoints", 0));
+        log.info("Retrieved historical weather data (scale=%s, limit=%d)", effectiveScale, limit);
         return ApiResponse.success(data, "Successfully retrieved historical weather data").toTextContent();
     }
 
@@ -132,6 +136,38 @@ public class WeatherMcpTools {
             data.put("limitedDataPoints", true);
             data.put("displayedDataPoints", maxPoints);
             data.put("totalDataPoints", values.size());
+        }
+    }
+
+    private String autoSelectSensorTypes(String sensorTypes, String scale) {
+        boolean isDailyOrLonger = "1day".equals(scale) || "1week".equals(scale) || "1month".equals(scale);
+        if (sensorTypes != null && !sensorTypes.isBlank()) {
+            // For daily+ scales, replace plain "Temperature" with min/max to get proper highs/lows
+            if (isDailyOrLonger) {
+                sensorTypes = sensorTypes.replace("Temperature", "min_temp,max_temp");
+            }
+            return sensorTypes;
+        }
+        if (isDailyOrLonger) {
+            return "min_temp,max_temp,Humidity";
+        }
+        return "Temperature,Humidity,Pressure";
+    }
+
+    private String autoSelectScale(String scale, String beginDate, String endDate) {
+        if (scale != null && !scale.isBlank()) {
+            return scale;
+        }
+        try {
+            LocalDate begin = beginDate != null ? LocalDate.parse(beginDate) : LocalDate.now().minusDays(7);
+            LocalDate end = endDate != null ? LocalDate.parse(endDate) : LocalDate.now();
+            long days = ChronoUnit.DAYS.between(begin, end);
+            if (days > 30) return "1week";
+            if (days > 7) return "1day";
+            if (days > 2) return "3hours";
+            return "1hour";
+        } catch (Exception e) {
+            return "1day";
         }
     }
 
