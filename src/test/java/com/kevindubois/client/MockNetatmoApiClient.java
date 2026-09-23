@@ -83,41 +83,113 @@ public class MockNetatmoApiClient implements NetatmoApiClient {
         return getStationsData(null);
     }
 
+    private static long stepTimeFor(String scale) {
+        if (scale == null) {
+            return 3600;
+        }
+        return switch (scale) {
+            case "30min" -> 1800;
+            case "1hour" -> 3600;
+            case "3hours" -> 10800;
+            case "1day" -> 86400;
+            case "1week" -> 604800;
+            case "1month" -> 2592000;
+            default -> 3600;
+        };
+    }
+
+    private static double indoorTemperature(int i) {
+        return 21 + 3 * Math.sin(i * 0.5);
+    }
+
+    private static int indoorHumidity(int i) {
+        return 45 + (int) (10 * Math.sin(i * 0.3));
+    }
+
+    private static double pressure(int i) {
+        return 1013 + 2 * Math.sin(i * 0.2);
+    }
+
+    private static int co2(int i) {
+        return 800 + (int) (400 * Math.abs(Math.sin(i * 0.7)));
+    }
+
+    private static double outdoorTemperature(int i) {
+        double t = 17 + 4 * Math.sin(i * 0.4);
+        if (i % 12 == 6) {
+            t += 7;
+        }
+        return t;
+    }
+
+    private static int outdoorHumidity(int i) {
+        return 50 + (int) (25 * Math.sin(i * 0.25));
+    }
+
+    private static double dailyMin(int i) {
+        return 14 + 3 * Math.sin(i * 0.4);
+    }
+
+    private static double dailyMax(int i) {
+        return 22 + 4 * Math.sin(i * 0.4);
+    }
+
+    private static List<Object> indoorPoint(int i, String type) {
+        if ("min_temp,max_temp".equals(type)) {
+            return List.of(round(dailyMin(i)), round(dailyMax(i)));
+        }
+        if ("Temperature,CO2,Humidity".equals(type)) {
+            return List.of(round(indoorTemperature(i)), co2(i), indoorHumidity(i));
+        }
+        return List.of(round(indoorTemperature(i)), indoorHumidity(i), round(pressure(i)));
+    }
+
+    private static List<Object> outdoorPoint(int i, String type) {
+        if ("min_temp,max_temp".equals(type)) {
+            return List.of(round(dailyMin(i)), round(dailyMax(i)));
+        }
+        if ("Temperature,CO2,Humidity".equals(type)) {
+            return List.of(round(outdoorTemperature(i)), co2(i), outdoorHumidity(i));
+        }
+        return List.of(round(outdoorTemperature(i)), outdoorHumidity(i));
+    }
+
+    private static double round(double v) {
+        return Math.round(v * 10.0) / 10.0;
+    }
+
     @Override
     public NetatmoHistoricalDataResponse getHistoricalData(
             String deviceId, String moduleId, String scale, String type,
             Long dateBegin, Long dateEnd, Integer limit, Boolean optimize, Boolean realTime) {
-        
-        // Create a list of mock measurements
-        List<List<Object>> measurements = new ArrayList<>();
-        long timestamp = dateBegin;
-        long stepTime = "1hour".equals(scale) ? 3600 : 86400; // 1 hour or 1 day in seconds
-        
-        int count = limit != null && limit > 0 ? limit : 24;
-        for (int i = 0; i < count; i++) {
-            if ("Temperature,Humidity,Pressure".equals(type)) {
-                // Indoor measurements
-                measurements.add(List.of(
-                    20.0 + Math.random() * 5, // Temperature between 20-25
-                    40 + (int)(Math.random() * 20), // Humidity between 40-60
-                    1010.0 + Math.random() * 10 // Pressure between 1010-1020
-                ));
-            } else if ("Temperature,Humidity".equals(type)) {
-                // Outdoor measurements
-                measurements.add(List.of(
-                    15.0 + Math.random() * 10, // Temperature between 15-25
-                    50 + (int)(Math.random() * 30) // Humidity between 50-80
-                ));
-            }
-            timestamp += stepTime;
+
+        long now = System.currentTimeMillis() / 1000;
+        long begin = dateBegin != null ? dateBegin : now - 7 * 86400;
+        long end = dateEnd != null ? dateEnd : now;
+        long step = stepTimeFor(scale);
+        long count = (end - begin) / step;
+        if (count < 1) {
+            count = 1;
         }
-        
+        if (count > 1024) {
+            count = 1024;
+        }
+        if (limit != null && limit > 0 && limit < count) {
+            count = limit;
+        }
+
+        boolean outdoor = moduleId != null && !moduleId.isBlank();
+        List<List<Object>> measurements = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            measurements.add(outdoor ? outdoorPoint(i, type) : indoorPoint(i, type));
+        }
+
         // Create measurement data map
         Map<String, Object> measurementData = new HashMap<>();
-        measurementData.put("beg_time", dateBegin);
-        measurementData.put("step_time", stepTime);
+        measurementData.put("beg_time", begin);
+        measurementData.put("step_time", step);
         measurementData.put("value", measurements);
-        
+
         // Create and return the response
         return new NetatmoHistoricalDataResponse(
             List.of(measurementData),
@@ -127,5 +199,3 @@ public class MockNetatmoApiClient implements NetatmoApiClient {
         );
     }
 }
-
-

@@ -119,10 +119,18 @@ public class NetatmoHistoricalDataResponse {
                 beginTime = (Long) beginTimeObj;
             }
             
-            Integer stepTime = (Integer) measurementData.get("step_time");
+            Integer stepTime = null;
+            Object stepTimeObj = measurementData.get("step_time");
+            if (stepTimeObj instanceof Integer) {
+                stepTime = (Integer) stepTimeObj;
+            } else if (stepTimeObj instanceof Long) {
+                stepTime = ((Long) stepTimeObj).intValue();
+            }
             List<Object> values = (List<Object>) measurementData.get("value");
-            
-            if (beginTime != null && stepTime != null && values != null) {
+
+            // step_time is optional: Netatmo omits it when the range resolves to a
+            // single data point. Callers fall back to the scale's step in seconds.
+            if (beginTime != null && values != null) {
                 return new NetatmoMeasurementData(beginTime, stepTime, values);
             }
         }

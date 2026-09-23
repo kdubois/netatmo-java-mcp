@@ -18,23 +18,32 @@
             padding: 1.5rem 2rem;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 1rem;
         }
         header h1 { font-size: 1.5rem; font-weight: 600; }
         header .subtitle { opacity: 0.85; font-size: 0.9rem; }
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
             padding: 1.5rem;
         }
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+            gap: 1.25rem;
+            align-items: start;
+        }
+        @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
         .tabs {
             display: flex;
             gap: 0.25rem;
             margin-bottom: 1.5rem;
             border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
         }
         .tab {
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             cursor: pointer;
             border: none;
             background: none;
@@ -66,6 +75,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
         .card p { color: #555; font-size: 0.9rem; }
         .badge {
@@ -74,11 +84,13 @@
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 500;
+            white-space: nowrap;
         }
         .badge-green { background: #e6f9e6; color: #1a7a1a; }
         .badge-blue { background: #e6f0ff; color: #1a4a9e; }
         .badge-orange { background: #fff3e0; color: #9e5a00; }
         .badge-purple { background: #f3e8ff; color: #6b21a8; }
+        .badge-gray { background: #eceef1; color: #555; }
         .annotations {
             display: flex;
             gap: 0.5rem;
@@ -94,10 +106,13 @@
             font-weight: 500;
             transition: all 0.2s;
         }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: #ee0000; color: white; }
-        .btn-primary:hover { background: #cc0000; }
+        .btn-primary:hover:not(:disabled) { background: #cc0000; }
         .btn-secondary { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
-        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-secondary:hover:not(:disabled) { background: #e0e0e0; }
+        .btn-danger { background: #fff; color: #9e1a1a; border: 1px solid #f0c0c0; }
+        .btn-danger:hover:not(:disabled) { background: #ffe6e6; }
         .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
         .result-box {
             background: #1e1e2e;
@@ -107,7 +122,7 @@
             margin-top: 0.75rem;
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-size: 0.8rem;
-            max-height: 300px;
+            max-height: 340px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-word;
@@ -124,16 +139,31 @@
             border-radius: 6px;
             font-size: 0.85rem;
             flex: 1;
+            font-family: inherit;
         }
+        .input-group input.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
         .input-group label {
             font-size: 0.8rem;
             color: #666;
-            min-width: 80px;
+            min-width: 90px;
+        }
+        textarea.args {
+            width: 100%;
+            min-height: 90px;
+            margin-top: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.8rem;
+            resize: vertical;
         }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
         .status { padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; }
         .status-ok { background: #e6f9e6; color: #1a7a1a; }
         .status-err { background: #ffe6e6; color: #9e1a1a; }
+        .status-info { background: #e6f0ff; color: #1a4a9e; }
         .prompt-messages { margin-top: 0.75rem; }
         .prompt-msg {
             padding: 0.5rem 0.75rem;
@@ -152,7 +182,151 @@
             font-size: 0.8rem;
             margin: 0.5rem 0;
         }
-        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+        .kv { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.9rem; font-size: 0.85rem; margin-top: 0.5rem; }
+        .kv dt { color: #777; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+        .kv dd { color: #222; word-break: break-word; }
+
+        /* progress bar */
+        .progress-wrap { margin-top: 0.75rem; }
+        .progress-track {
+            height: 8px;
+            background: #e6e6e6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ee0000, #ff6a00);
+            transition: width 0.25s ease;
+        }
+        .progress-label { font-size: 0.78rem; color: #666; margin-top: 0.3rem; }
+
+        /* MRTR form */
+        .mrtr {
+            margin-top: 0.75rem;
+            border: 1px solid #f0c0a0;
+            background: #fff8f0;
+            border-radius: 6px;
+            padding: 0.9rem 1rem;
+        }
+        .mrtr h4 { font-size: 0.9rem; color: #9e5a00; margin-bottom: 0.4rem; }
+        .mrtr .mrtr-entry { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed #f0d0b0; }
+        .mrtr .mrtr-entry:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+        .mrtr .mrtr-msg { font-size: 0.85rem; color: #555; margin-bottom: 0.5rem; }
+        .mrtr input[type="text"], .mrtr input[type="number"] {
+            width: 100%;
+            padding: 0.45rem 0.6rem;
+            border: 1px solid #e0c0a0;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        .mrtr label.mrtr-field { font-size: 0.8rem; color: #666; display: block; margin-top: 0.5rem; }
+        .mrtr-actions { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
+
+        /* inspector */
+        .inspector {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: calc(100vh - 160px);
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+        .insp-entry { border: 1px solid #e8e8e8; border-radius: 6px; background: #fbfbfc; }
+        .insp-entry summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 0.45rem 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .insp-entry summary::-webkit-details-marker { display: none; }
+        .insp-entry summary::before { content: '▸'; color: #999; font-size: 0.7rem; }
+        .insp-entry[open] summary::before { content: '▾'; }
+        .insp-dir { font-weight: 700; }
+        .insp-dir.req { color: #1a4a9e; }
+        .insp-dir.res { color: #1a7a1a; }
+        .insp-dir.notif { color: #9e5a00; }
+        .insp-meth { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #333; }
+        .insp-id { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #999; }
+        .insp-ts { margin-left: auto; font-size: 0.7rem; color: #aaa; font-family: 'JetBrains Mono', monospace; }
+        .insp-body {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 0.7rem 0.8rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.72rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border-radius: 0 0 6px 6px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .hl { font-weight: 700; }
+        .hl-resultType { color: #f38ba8; }
+        .hl-requestState { color: #fab387; }
+        .hl-inputResponses { color: #a6e3a1; }
+        .hl-ttlMs, .hl-cacheScope { color: #89b4fa; }
+        .hl-meta { color: #cba6f7; }
+
+        /* live feed */
+        .feed { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.75rem; max-height: 420px; overflow-y: auto; }
+        .feed-line {
+            border: 1px solid #e8e8e8;
+            border-left: 3px solid #1a4a9e;
+            border-radius: 6px;
+            padding: 0.5rem 0.7rem;
+            background: #fbfbfc;
+            font-size: 0.8rem;
+        }
+        .feed-line.ack { border-left-color: #1a7a1a; background: #f2fbf2; }
+        .feed-line.updated { border-left-color: #9e5a00; background: #fff8f0; }
+        .feed-head { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .feed-method { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #333; }
+        .feed-ts { font-size: 0.7rem; color: #aaa; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
+        .feed-sub { font-size: 0.7rem; color: #1a7a1a; font-family: 'JetBrains Mono', monospace; }
+        .feed-payload {
+            margin-top: 0.35rem;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            border-radius: 5px;
+            padding: 0.5rem 0.6rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* toast */
+        #toast {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 50;
+        }
+        .toast-item {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            max-width: 340px;
+            animation: slidein 0.2s ease;
+        }
+        .toast-item.err { background: #7a1a1a; }
+        .toast-item.ok { background: #1a5a2a; }
+        @keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+        code { font-family: 'JetBrains Mono', monospace; font-size: 0.8em; background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -160,374 +334,1057 @@
 <header>
     <div>
         <h1>MCP Explorer</h1>
-        <div class="subtitle">Netatmo Weather Station - Quarkus MCP Server Demo</div>
+        <div class="subtitle">Netatmo Weather Station &middot; stateless MCP 2026-07-28</div>
     </div>
+    <span class="badge badge-green" style="background:rgba(255,255,255,0.2);color:#fff;">stateless 2026-07-28</span>
 </header>
 
 <div class="container">
-    <div class="tabs">
-        <button class="tab active" data-panel="tools">Tools</button>
-        <button class="tab" data-panel="resources">Resources</button>
-        <button class="tab" data-panel="prompts">Prompts</button>
-        <button class="tab" data-panel="admin">Admin (Auth)</button>
-    </div>
-
-    <div id="tools" class="panel active">
-        <div id="connection-status" class="status status-ok">Connecting to MCP server...</div>
-        <div id="tools-list"></div>
-    </div>
-
-    <div id="resources" class="panel">
-        <h2 style="margin-bottom:1rem; font-size:1.1rem;">Static Resources</h2>
-        <div id="resources-list"></div>
-        <h2 style="margin:1.5rem 0 1rem; font-size:1.1rem;">Resource Templates</h2>
-        <div id="templates-list"></div>
-    </div>
-
-    <div id="prompts" class="panel">
-        <div id="prompts-list"></div>
-    </div>
-
-    <div id="admin" class="panel">
-        <div class="card">
-            <h3>Authentication</h3>
-            <p>The admin MCP server at <code>/admin/mcp</code> requires a bearer token with the <strong>admin</strong> role.
-               In dev mode, use Keycloak Dev Services (alice/alice has admin role).</p>
-            <div class="input-group">
-                <label>Token:</label>
-                <input type="text" id="admin-token" placeholder="Paste bearer token here..." class="token-input">
+    <div class="main-grid">
+        <div class="left">
+            <div class="tabs">
+                <button class="tab active" data-panel="server">Server</button>
+                <button class="tab" data-panel="tools">Tools</button>
+                <button class="tab" data-panel="feed">Live Feed</button>
+                <button class="tab" data-panel="resources">Resources</button>
+                <button class="tab" data-panel="prompts">Prompts</button>
+                <button class="tab" data-panel="admin">Admin (Auth)</button>
             </div>
-            <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
-                <button class="btn btn-primary btn-sm" onclick="fetchKeycloakToken()">Get Token (Dev Mode)</button>
-                <button class="btn btn-secondary btn-sm" onclick="initAdmin()">Connect to Admin</button>
+
+            <!-- 1. Connect / server/discover -->
+            <div id="server" class="panel active">
+                <div id="connection-status" class="status status-info">Discovering server...</div>
+                <div id="discover-out"></div>
             </div>
-            <div id="admin-status" class="status status-err" style="margin-top:0.75rem;">Not connected</div>
+
+            <!-- 3. Tools -->
+            <div id="tools" class="panel">
+                <div class="card">
+                    <h3>Tools
+                        <button class="btn btn-secondary btn-sm" onclick="loadTools()">tools/list</button>
+                    </h3>
+                    <p>Call a public tool on <code>/mcp</code>. <code>get_historical_weather</code> is pre-filled with a
+                       14-day range; bump <code>beginDate</code> to ~60 days ago to trigger the MRTR confirmation flow.</p>
+                </div>
+                <div id="tools-list"></div>
+            </div>
+
+            <!-- 4. Live feed -->
+            <div id="feed" class="panel">
+                <div class="card">
+                    <h3>Subscription Feed</h3>
+                    <p>Holds a long-lived <code>subscriptions/listen</code> SSE stream on <code>/mcp</code>, opted into
+                       list-changed and <code>weather:///current</code> updates.</p>
+                    <div style="display:flex; gap:0.5rem; margin-top:0.75rem; flex-wrap:wrap;">
+                        <button class="btn btn-primary btn-sm" id="feed-open-btn" onclick="openListen()">Open subscription</button>
+                        <button class="btn btn-danger btn-sm" id="feed-close-btn" onclick="closeListen()" disabled>Close</button>
+                        <button class="btn btn-secondary btn-sm" onclick="triggerRefresh()">Trigger refresh (admin)</button>
+                    </div>
+                    <div id="feed-status" class="status status-info" style="margin-top:0.75rem;">Not listening</div>
+                    <div id="feed-lines" class="feed"></div>
+                </div>
+            </div>
+
+            <!-- 5. Resources -->
+            <div id="resources" class="panel">
+                <div class="card">
+                    <h3>Static Resources
+                        <button class="btn btn-secondary btn-sm" onclick="loadResources()">resources/list</button>
+                    </h3>
+                    <p>Re-reading a URI inside its <code>ttlMs</code> serves the explorer's local copy.</p>
+                </div>
+                <div id="resources-list"></div>
+                <h2 style="margin:1.5rem 0 1rem; font-size:1.1rem;">Resource Templates</h2>
+                <div id="templates-list"></div>
+            </div>
+
+            <!-- 6. Prompts -->
+            <div id="prompts" class="panel">
+                <div class="card">
+                    <h3>Prompts
+                        <button class="btn btn-secondary btn-sm" onclick="loadPrompts()">prompts/list</button>
+                    </h3>
+                </div>
+                <div id="prompts-list"></div>
+            </div>
+
+            <!-- 7. Admin -->
+            <div id="admin" class="panel">
+                <div class="card">
+                    <h3>Authentication</h3>
+                    <p>The admin server at <code>/admin/mcp</code> requires a bearer token with the <strong>admin</strong> role.
+                       In dev mode, Keycloak Dev Services runs (alice/alice has admin).</p>
+                    <div class="input-group">
+                        <label>Token:</label>
+                        <input type="text" id="admin-token" placeholder="Paste bearer token here..." class="token-input">
+                    </div>
+                    <div style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button class="btn btn-primary btn-sm" onclick="fetchKeycloakToken()">Get Token (Dev Mode)</button>
+                        <button class="btn btn-secondary btn-sm" onclick="initAdmin()">Connect to Admin</button>
+                    </div>
+                    <div id="admin-status" class="status status-err" style="margin-top:0.75rem;">Not connected</div>
+                </div>
+                <div id="admin-tools-list"></div>
+            </div>
         </div>
-        <div id="admin-tools-list"></div>
+
+        <!-- 2. Raw inspector (always visible) -->
+        <div class="right">
+            <div class="card" style="position:sticky; top:1rem;">
+                <h3>Raw Inspector
+                    <button class="btn btn-secondary btn-sm" style="margin-left:auto;" onclick="clearInspector()">Clear</button>
+                </h3>
+                <p style="margin-bottom:0.75rem;">Every request and response as JSON. Highlighted keys:
+                   <code>resultType</code> <code>requestState</code> <code>inputResponses</code> <code>ttlMs</code>
+                   <code>cacheScope</code> and <code>_meta</code>.</p>
+                <div id="inspector" class="inspector"></div>
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
-let mcpSessionId = null;
-let adminSessionId = null;
-let requestId = 0;
+<div id="toast"></div>
 
+<script>
+'use strict';
+
+const PROTOCOL_VERSION = '2026-07-28';
+const PUBLIC_ENDPOINT = '/mcp';
+const ADMIN_ENDPOINT = '/admin/mcp';
+let requestId = 0;
 function nextId() { return ++requestId; }
 
-async function mcpRequest(method, params = {}, endpoint = '/mcp', token = null) {
-    const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
-    if (token) headers['Authorization'] = 'Bearer ' + token;
+// ---- per-request stateless metadata (required on every request) ----
+function baseMeta() {
+    return {
+        'io.modelcontextprotocol/protocolVersion': PROTOCOL_VERSION,
+        'io.modelcontextprotocol/clientInfo': { name: 'mcp-explorer', version: '1.0' },
+        // elicitation capability required for MRTR (resultType=input_required) tools
+        'io.modelcontextprotocol/clientCapabilities': { elicitation: {} },
+        'io.modelcontextprotocol/logLevel': 'info'
+    };
+}
 
-    const body = { jsonrpc: '2.0', id: nextId(), method, params };
-    const resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
-
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-
-    const contentType = resp.headers.get('content-type') || '';
-    if (contentType.includes('text/event-stream')) {
-        const text = await resp.text();
-        const lines = text.split('\n');
-        for (const line of lines) {
-            if (line.startsWith('data:')) {
-                try { return JSON.parse(line.slice(5).trim()); } catch(e) {}
+// ---- stateless wire headers required by the server ----
+// Mcp-Method (all methods), Mcp-Name (tools/call, prompts/get -> name; resources/read -> uri),
+// Mcp-Param-{x-mcp-header} (tools/call args annotated with x-mcp-header in inputSchema)
+function mcpHeaders(method, params, tool) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/event-stream',
+        'Mcp-Protocol-Version': PROTOCOL_VERSION,
+        'Mcp-Method': method
+    };
+    const name = (params && params.name) || (method === 'resources/read' && params && params.uri);
+    if (method === 'tools/call' || method === 'prompts/get') {
+        if (name) headers['Mcp-Name'] = name;
+        if (method === 'tools/call' && tool && tool.inputSchema && params && params.arguments) {
+            for (const [argName, schema] of Object.entries(tool.inputSchema.properties || {})) {
+                if (schema && schema['x-mcp-header'] && params.arguments[argName] != null) {
+                    headers['Mcp-Param-' + schema['x-mcp-header']] = String(params.arguments[argName]);
+                }
             }
         }
+    } else if (method === 'resources/read') {
+        if (name) headers['Mcp-Name'] = name;
+    }
+    return headers;
+}
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function nowTs() { return new Date().toISOString().slice(11, 23); }
+function isoDaysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); }
+
+// ---- toast ----
+function toast(msg, kind) {
+    const el = document.createElement('div');
+    el.className = 'toast-item' + (kind ? ' ' + kind : '');
+    el.textContent = msg;
+    document.getElementById('toast').appendChild(el);
+    setTimeout(() => { el.style.transition = 'opacity 0.4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 5000);
+}
+
+// ---- raw inspector ----
+const HIGHLIGHT_KEYS = ['resultType', 'requestState', 'inputResponses', 'ttlMs', 'cacheScope'];
+function highlightJson(obj) {
+    let s;
+    try { s = JSON.stringify(obj, null, 2); } catch (e) { s = String(obj); }
+    s = esc(s);
+    const lines = s.split('\n');
+    return lines.map(line => {
+        const m = line.match(/^(\s*)("([^"]*)")(\s*:)/);
+        if (!m) return line;
+        const key = m[3];
+        let cls = null;
+        if (HIGHLIGHT_KEYS.includes(key)) cls = 'hl-' + key;
+        else if (key === '_meta' || key.includes('io.modelcontextprotocol')) cls = 'hl-meta';
+        if (!cls) return line;
+        return line.replace(m[2], '<span class="hl ' + cls + '">' + m[2] + '</span>');
+    }).join('\n');
+}
+function inspEntry({ dir, dirClass, method, id, badge, badgeClass, body }) {
+    const insp = document.getElementById('inspector');
+    const d = document.createElement('details');
+    d.className = 'insp-entry';
+    let len = 0;
+    try { len = JSON.stringify(body).length; } catch (e) {}
+    const open = (len && len < 1400) ? ' open' : '';
+    d.innerHTML =
+        '<summary><span class="insp-dir ' + dirClass + '">' + dir + '</span>' +
+        '<span class="insp-meth">' + esc(method) + '</span>' +
+        (id != null ? '<span class="insp-id">#' + esc(String(id)) + '</span>' : '') +
+        (badge ? '<span class="badge ' + (badgeClass || 'badge-gray') + '">' + esc(badge) + '</span>' : '') +
+        '<span class="insp-ts">' + nowTs() + '</span></summary>' +
+        '<pre class="insp-body">' + highlightJson(body) + '</pre>';
+    insp.appendChild(d);
+    while (insp.children.length > 200) insp.removeChild(insp.firstChild);
+    insp.scrollTop = insp.scrollHeight;
+}
+function logRequest(method, body) {
+    inspEntry({ dir: '\u2192', dirClass: 'req', method, id: body.id, badge: 'sent', badgeClass: 'badge-blue', body });
+}
+function logResponse(obj) {
+    if (!obj) return;
+    const isErr = obj.error != null;
+    const rt = obj.result && obj.result.resultType;
+    inspEntry({
+        dir: '\u2190', dirClass: 'res',
+        method: isErr ? ('error ' + obj.error.code) : (rt || 'result'),
+        id: obj.id,
+        badge: isErr ? ('err ' + obj.error.code) : (rt || 'ok'),
+        badgeClass: isErr ? 'badge-orange' : (rt === 'input_required' ? 'badge-purple' : 'badge-green'),
+        body: obj
+    });
+}
+function logNotification(obj) {
+    if (!obj || !obj.method) return;
+    inspEntry({ dir: '\u2022', dirClass: 'notif', method: obj.method, id: obj.id, badge: 'notification', badgeClass: 'badge-gray', body: obj });
+}
+function clearInspector() { document.getElementById('inspector').innerHTML = ''; }
+
+// ---- SSE frame parsing ----
+function parseSseFrame(raw) {
+    let data = '';
+    for (const line of raw.split('\n')) {
+        if (line.startsWith('data:')) {
+            const chunk = line.slice(5).replace(/^ /, '');
+            data += (data ? '\n' : '') + chunk;
+        }
+    }
+    if (!data) return null;
+    try { return JSON.parse(data); } catch (e) { return null; }
+}
+async function readSse(resp, onFrame) {
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) !== -1) {
+            const raw = buf.slice(0, idx);
+            buf = buf.slice(idx + 2);
+            const obj = parseSseFrame(raw);
+            if (obj) onFrame(obj);
+        }
+    }
+    const last = parseSseFrame(buf);
+    if (last) onFrame(last);
+}
+
+// ---- core JSON-RPC call (handles application/json and text/event-stream) ----
+async function mcpCall(endpoint, token, method, params = {}, progressToken = null, onNotification = null, tool = null) {
+    const p = { ...params };
+    const meta = baseMeta();
+    if (progressToken) meta.progressToken = progressToken;
+    p._meta = meta;
+    const body = { jsonrpc: '2.0', id: nextId(), method, params: p };
+    const headers = mcpHeaders(method, p, tool);
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    logRequest(method, body);
+
+    let resp;
+    try {
+        resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+    } catch (e) {
+        throw new Error('Network error: ' + e.message);
+    }
+    if (!resp.ok) {
+        let errText = '';
+        try { errText = (await resp.text()).slice(0, 300); } catch (e) {}
+        const err = new Error('HTTP ' + resp.status + ' ' + resp.statusText + (errText ? ' - ' + errText : ''));
+        err.status = resp.status;
+        throw err;
+    }
+
+    const ct = resp.headers.get('content-type') || '';
+    let result = null;
+    if (ct.includes('text/event-stream')) {
+        await readSse(resp, obj => {
+            if (obj.id != null) {
+                if (result == null) result = obj;
+                logResponse(obj);
+            } else if (obj.method) {
+                logNotification(obj);
+                if (onNotification) onNotification(obj);
+            }
+        });
+    } else {
+        result = await resp.json();
+        logResponse(result);
+    }
+    if (result == null) throw new Error('No JSON-RPC result received from ' + method);
+    return result;
+}
+
+// interpret a JSON-RPC response: returns { result } or throws with error detail
+function unwrap(resp, method) {
+    if (resp.error) {
+        const e = new Error('JSON-RPC error ' + resp.error.code + ': ' + resp.error.message);
+        e.rpcError = resp.error;
+        throw e;
+    }
+    if (resp.result == null) throw new Error('Empty result from ' + method);
+    return resp.result;
+}
+
+// ===================== 1. server/discover =====================
+async function discover() {
+    const statusEl = document.getElementById('connection-status');
+    statusEl.className = 'status status-info';
+    statusEl.textContent = 'Discovering server at /mcp ...';
+    try {
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'server/discover', {});
+        const r = unwrap(resp, 'server/discover');
+        statusEl.className = 'status status-ok';
+        statusEl.textContent = 'Connected over stateless MCP';
+        const caps = Object.keys(r.capabilities || {}).join(', ') || '(none)';
+        const info = r.serverInfo || {};
+        document.getElementById('discover-out').innerHTML = `
+            <div class="card">
+                <h3>Server <span class="badge badge-green">stateless ${PROTOCOL_VERSION}</span></h3>
+                <dl class="kv">
+                    <dt>negotiated</dt><dd>${esc(r.protocolVersion || PROTOCOL_VERSION)}</dd>
+                    <dt>supportedVersions</dt><dd>${esc((r.supportedVersions || []).join(', '))}</dd>
+                    <dt>serverInfo</dt><dd>${esc(info.name || '')} ${esc(info.version || '')} ${info.title ? '(\u201c' + esc(info.title) + '\u201d)' : ''}</dd>
+                    <dt>capabilities</dt><dd>${esc(caps)}</dd>
+                    <dt>ttlMs</dt><dd>${esc(String(r.ttlMs != null ? r.ttlMs : 'n/a'))}</dd>
+                    <dt>cacheScope</dt><dd>${esc(String(r.cacheScope != null ? r.cacheScope : 'n/a'))}</dd>
+                    ${r.instructions ? `<dt>instructions</dt><dd>${esc(r.instructions)}</dd>` : ''}
+                </dl>
+            </div>`;
+        return r;
+    } catch (e) {
+        statusEl.className = 'status status-err';
+        statusEl.textContent = 'Discovery failed: ' + e.message;
+        toast('server/discover failed: ' + e.message, 'err');
         return null;
     }
-    return await resp.json();
 }
 
-async function initialize(endpoint = '/mcp', token = null) {
-    const resp = await mcpRequest('initialize', {
-        protocolVersion: '2025-03-26',
-        capabilities: {},
-        clientInfo: { name: 'MCP Explorer', version: '1.0.0' }
-    }, endpoint, token);
-    return resp;
+// ===================== 3. Tools =====================
+const DEFAULT_ARGS = {
+    get_historical_weather: () => ({ beginDate: isoDaysAgo(14), endDate: isoDaysAgo(0) }),
+    compare_periods: () => ({ period1Start: isoDaysAgo(14), period1End: isoDaysAgo(8), period2Start: isoDaysAgo(7), period2End: isoDaysAgo(1) }),
+    run_anomaly_scan: () => ({ daysBack: '7' })
+};
+function defaultArgs(tool) {
+    if (DEFAULT_ARGS[tool.name]) return DEFAULT_ARGS[tool.name]();
+    const props = (tool.inputSchema && tool.inputSchema.properties) || {};
+    const req = (tool.inputSchema && tool.inputSchema.required) || [];
+    const args = {};
+    for (const k of req) args[k] = null;
+    return args;
 }
 
-async function init() {
-    try {
-        await initialize();
-        document.getElementById('connection-status').textContent = 'Connected to MCP server at /mcp';
-        document.getElementById('connection-status').className = 'status status-ok';
-        await loadTools();
-        await loadResources();
-        await loadPrompts();
-    } catch (e) {
-        document.getElementById('connection-status').textContent = 'Connection failed: ' + e.message;
-        document.getElementById('connection-status').className = 'status status-err';
-    }
+function annotationBadges(a) {
+    if (!a) return '';
+    let b = '';
+    if (a.readOnlyHint) b += '<span class="badge badge-green">read-only</span>';
+    else if (a.readOnlyHint === false) b += '<span class="badge badge-orange">read-write</span>';
+    if (a.idempotentHint) b += '<span class="badge badge-green">idempotent</span>';
+    if (a.destructiveHint === false) b += '<span class="badge badge-green">non-destructive</span>';
+    if (a.openWorldHint) b += '<span class="badge badge-orange">open-world</span>';
+    return b;
 }
 
 async function loadTools() {
-    const resp = await mcpRequest('tools/list');
-    const tools = resp?.result?.tools || [];
     const container = document.getElementById('tools-list');
-    container.innerHTML = tools.map(tool => `
-        <div class="card">
-            <h3>
-                ${tool.name}
-                ${tool.annotations?.title ? `<span class="badge badge-blue">${tool.annotations.title}</span>` : ''}
-            </h3>
-            <p>${tool.description || ''}</p>
-            <div class="annotations">
-                ${tool.annotations?.readOnlyHint ? '<span class="badge badge-green">read-only</span>' : ''}
-                ${tool.annotations?.idempotentHint ? '<span class="badge badge-green">idempotent</span>' : ''}
-                ${tool.annotations?.openWorldHint ? '<span class="badge badge-orange">open-world</span>' : ''}
-                ${tool.annotations?.destructiveHint === false ? '<span class="badge badge-green">non-destructive</span>' : ''}
-            </div>
-            ${renderToolArgs(tool)}
-            <div style="margin-top:0.75rem;">
-                <button class="btn btn-primary btn-sm" onclick="callTool('${tool.name}')">Call Tool</button>
-            </div>
-            <div id="result-${tool.name}" class="result-box" style="display:none;"></div>
-        </div>
-    `).join('');
-}
-
-function renderToolArgs(tool) {
-    const props = tool.inputSchema?.properties || {};
-    const required = tool.inputSchema?.required || [];
-    const entries = Object.entries(props);
-    if (entries.length === 0) return '';
-    return '<div style="margin-top:0.75rem;">' + entries.map(([name, schema]) => `
-        <div class="input-group">
-            <label>${name}${required.includes(name) ? '*' : ''}:</label>
-            <input type="text" id="arg-${tool.name}-${name}" placeholder="${schema.description || name}">
-        </div>
-    `).join('') + '</div>';
-}
-
-async function callTool(name) {
-    const resultEl = document.getElementById('result-' + name);
-    resultEl.style.display = 'block';
-    resultEl.textContent = 'Calling...';
+    container.innerHTML = '<p style="color:#888;">Loading tools...</p>';
     try {
-        const inputs = document.querySelectorAll(`[id^="arg-${name}-"]`);
-        const args = {};
-        inputs.forEach(input => {
-            if (input.value.trim()) {
-                const argName = input.id.replace(`arg-${name}-`, '');
-                args[argName] = input.value.trim();
-            }
-        });
-        const resp = await mcpRequest('tools/call', { name, arguments: args });
-        const result = resp?.result;
-        if (result?.isError) {
-            resultEl.textContent = 'ERROR: ' + (result.content?.[0]?.text || 'Unknown error');
-        } else {
-            const text = result?.content?.[0]?.text || JSON.stringify(result, null, 2);
-            try { resultEl.textContent = JSON.stringify(JSON.parse(text), null, 2); }
-            catch { resultEl.textContent = text; }
-        }
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'tools/list', {});
+        const r = unwrap(resp, 'tools/list');
+        const tools = r.tools || [];
+        window.__tools = window.__tools || {};
+        tools.forEach(t => { window.__tools[t.name] = t; });
+        container.innerHTML = tools.map(tool => `
+            <div class="card">
+                <h3>${esc(tool.name)}
+                    ${tool.annotations && tool.annotations.title ? '<span class="badge badge-blue">' + esc(tool.annotations.title) + '</span>' : ''}
+                </h3>
+                <p>${esc(tool.description || '')}</p>
+                <div class="annotations">${annotationBadges(tool.annotations)}</div>
+                <div class="annotations" style="margin-top:0.5rem;">
+                    <span class="badge badge-gray">ttlMs ${esc(String(r.ttlMs != null ? r.ttlMs : 'n/a'))}</span>
+                    <span class="badge badge-gray">cacheScope ${esc(String(r.cacheScope != null ? r.cacheScope : 'n/a'))}</span>
+                </div>
+                <textarea class="args" id="args-${esc(tool.name)}">${esc(JSON.stringify(defaultArgs(tool), null, 2))}</textarea>
+                <div style="margin-top:0.75rem;">
+                    <button class="btn btn-primary btn-sm" id="call-${esc(tool.name)}" onclick="callTool('${esc(tool.name)}')">Call Tool</button>
+                    <button class="btn btn-secondary btn-sm" onclick="resetArgs('${esc(tool.name)}')">Reset args</button>
+                </div>
+                <div id="result-${esc(tool.name)}"></div>
+            </div>`).join('') || '<p style="color:#888;">No tools found.</p>';
     } catch (e) {
-        resultEl.textContent = 'Error: ' + e.message;
+        container.innerHTML = '<p style="color:#9e1a1a;">Failed: ' + esc(e.message) + '</p>';
+        toast('tools/list failed: ' + e.message, 'err');
     }
 }
 
-async function loadResources() {
-    const resp = await mcpRequest('resources/list');
-    const resources = resp?.result?.resources || [];
-    const container = document.getElementById('resources-list');
-    container.innerHTML = resources.map(r => `
-        <div class="card">
-            <h3>${r.name || r.uri} <span class="badge badge-purple">${r.mimeType || 'text'}</span></h3>
-            <p>${r.description || ''}</p>
-            <p style="font-family:monospace; font-size:0.8rem; color:#888; margin-top:0.25rem;">${r.uri}</p>
-            ${r.annotations ? `<div class="annotations">
-                ${r.annotations.audience ? `<span class="badge badge-blue">${r.annotations.audience}</span>` : ''}
-                ${r.annotations.priority != null ? `<span class="badge badge-orange">priority: ${r.annotations.priority}</span>` : ''}
-            </div>` : ''}
-            <button class="btn btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="readResource('${r.uri}')">Read</button>
-            <div id="res-${btoa(r.uri)}" class="result-box" style="display:none;"></div>
-        </div>
-    `).join('') || '<p style="color:#888;">No static resources found.</p>';
-
-    const tResp = await mcpRequest('resources/templates/list');
-    const templates = tResp?.result?.resourceTemplates || [];
-    const tContainer = document.getElementById('templates-list');
-    tContainer.innerHTML = templates.map(t => `
-        <div class="card">
-            <h3>${t.name || t.uriTemplate}</h3>
-            <p>${t.description || ''}</p>
-            <p style="font-family:monospace; font-size:0.8rem; color:#888; margin-top:0.25rem;">${t.uriTemplate}</p>
-            <div class="input-group">
-                <label>URI:</label>
-                <input type="text" id="tmpl-${btoa(t.uriTemplate)}" placeholder="Fill in template, e.g. ${t.uriTemplate.replace(/\{[^}]+\}/g, 'value')}">
-            </div>
-            <button class="btn btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="readTemplateResource('${btoa(t.uriTemplate)}')">Read</button>
-            <div id="tmpl-res-${btoa(t.uriTemplate)}" class="result-box" style="display:none;"></div>
-        </div>
-    `).join('') || '<p style="color:#888;">No resource templates found.</p>';
+function resetArgs(name) {
+    const ta = document.getElementById('args-' + name);
+    if (!ta) return;
+    const tool = (window.__tools || {})[name];
+    ta.value = JSON.stringify(defaultArgs(tool || { name }), null, 2);
 }
 
-async function readResource(uri) {
-    const el = document.getElementById('res-' + btoa(uri));
-    el.style.display = 'block';
-    el.textContent = 'Loading...';
+function renderToolResult(targetId, result) {
+    const area = document.getElementById(targetId);
+    if (!area) return;
+    let html = '';
+    if (result.isError) {
+        html += '<div class="status status-err">Tool returned an error</div>';
+    }
+    if (result.structuredContent != null) {
+        html += '<div class="status status-info">structuredContent</div>';
+        html += '<div class="result-box">' + esc(JSON.stringify(result.structuredContent, null, 2)) + '</div>';
+    }
+    if (result.content && result.content.length) {
+        const text = result.content.map(c => c.text != null ? c.text : JSON.stringify(c)).join('\n');
+        let pretty = text;
+        try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch (e) {}
+        html += '<div class="result-box">' + esc(pretty) + '</div>';
+    }
+    if (!html) html = '<div class="result-box">' + esc(JSON.stringify(result, null, 2)) + '</div>';
+    area.innerHTML += html;
+}
+
+function updateProgress(pid, n, hostId) {
+    let wrap = document.getElementById(pid);
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = pid;
+        wrap.className = 'progress-wrap';
+        wrap.innerHTML = '<div class="progress-track"><div class="progress-bar"></div></div><div class="progress-label"></div>';
+        const host = document.getElementById(hostId || pid.replace(/^progress-/, ''));
+        if (host && host.parentNode) host.parentNode.insertBefore(wrap, host);
+        else return;
+    }
+    const p = n.params || {};
+    const total = p.total != null ? p.total : 100;
+    const val = p.progress != null ? p.progress : 0;
+    wrap.querySelector('.progress-bar').style.width = Math.max(0, Math.min(100, (val / total) * 100)) + '%';
+    wrap.querySelector('.progress-label').textContent = (p.message || 'working...') + ' \u2014 ' + val + '/' + total;
+}
+
+function parseArgsJson(name) {
+    const ta = document.getElementById('args-' + name);
+    let args = {};
+    if (ta && ta.value.trim()) {
+        try { args = JSON.parse(ta.value); }
+        catch (e) { const err = new Error('Invalid args JSON: ' + e.message); err.badArgs = true; throw err; }
+    }
+    return args;
+}
+
+async function callTool(name) {
+    const area = document.getElementById('result-' + name);
+    const btn = document.getElementById('call-' + name);
+    let args;
+    try { args = parseArgsJson(name); }
+    catch (e) {
+        area.innerHTML = '<div class="status status-err">' + esc(e.message) + '</div>';
+        toast(e.message, 'err');
+        return;
+    }
+    area.innerHTML = '<div class="status status-info">Calling ' + esc(name) + '...</div>';
+    if (btn) btn.disabled = true;
+    const progressToken = 'prog-' + nextId();
+    const toolDef = (window.__tools || {})[name] || null;
     try {
-        const resp = await mcpRequest('resources/read', { uri });
-        const contents = resp?.result?.contents || [];
-        const text = contents.map(c => c.text || c.blob || '').join('\n');
-        try { el.textContent = JSON.stringify(JSON.parse(text), null, 2); }
-        catch { el.textContent = text; }
-    } catch (e) { el.textContent = 'Error: ' + e.message; }
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'tools/call', { name, arguments: args }, progressToken, n => updateProgress('progress-' + name, n, 'result-' + name), toolDef);
+        const result = unwrap(resp, 'tools/call');
+        area.innerHTML = '';
+        if (result.resultType === 'input_required') {
+            renderMrtr('result-' + name, { name, arguments: args, progressToken, endpoint: PUBLIC_ENDPOINT, token: null, toolDef }, result);
+        } else {
+            renderToolResult('result-' + name, result);
+        }
+    } catch (e) {
+        handleCallError(area, e, name);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function handleCallError(area, e, name) {
+    let msg = e.message;
+    if (e.rpcError) msg = 'JSON-RPC ' + e.rpcError.code + ': ' + e.rpcError.message;
+    if (e.status === 401) msg += ' \u2014 log in on the Admin tab first.';
+    area.innerHTML = '<div class="status status-err">' + esc(msg) + '</div>';
+    toast(msg, 'err');
+}
+
+// ---- MRTR (multi round-trip request) ----
+function renderMrtr(targetId, ctx, result) {
+    const area = document.getElementById(targetId);
+    const formId = 'mrtr-' + Date.now();
+    const entries = Object.entries(result.inputRequests || {});
+    let fieldsHtml = '';
+    entries.forEach(([key, entry]) => {
+        const p = entry.params || {};
+        const schema = p.requestedSchema || {};
+        const props = schema.properties || {};
+        const required = schema.required || [];
+        let inputs = '';
+        for (const [propName, ps] of Object.entries(props)) {
+            const title = ps.title || ps.description || propName;
+            const reqMark = required.includes(propName) ? ' <span style="color:#ee0000">*</span>' : '';
+            if (ps.type === 'boolean') {
+                inputs += `<label class="mrtr-field" style="display:flex;align-items:center;gap:0.5rem;">
+                    <input type="checkbox" data-mrtr="${formId}" data-key="${esc(key)}" data-prop="${esc(propName)}" data-type="boolean">
+                    ${esc(title)}${reqMark}</label>`;
+            } else if (ps.type === 'number' || ps.type === 'integer') {
+                inputs += `<label class="mrtr-field">${esc(title)}${reqMark}
+                    <input type="number" data-mrtr="${formId}" data-key="${esc(key)}" data-prop="${esc(propName)}" data-type="number"></label>`;
+            } else {
+                inputs += `<label class="mrtr-field">${esc(title)}${reqMark}
+                    <input type="text" data-mrtr="${formId}" data-key="${esc(key)}" data-prop="${esc(propName)}" data-type="string"></label>`;
+            }
+        }
+        fieldsHtml += `
+            <div class="mrtr-entry">
+                <div class="mrtr-msg">${esc(p.message || '')} <span class="badge badge-purple">${esc(key)}</span></div>
+                ${inputs || '<div class="mrtr-msg">(no schema properties)</div>'}
+            </div>`;
+    });
+
+    area.insertAdjacentHTML('beforeend', `
+        <div class="mrtr" id="${formId}">
+            <h4>Server requires input (MRTR, resultType=input_required)</h4>
+            ${fieldsHtml}
+            <div class="mrtr-actions">
+                <button class="btn btn-primary btn-sm" onclick="submitMrtr('${targetId}','${formId}','accept')">Accept</button>
+                <button class="btn btn-danger btn-sm" onclick="submitMrtr('${targetId}','${formId}','decline')">Decline</button>
+            </div>
+        </div>`);
+    window.__mrtr = window.__mrtr || {};
+    window.__mrtr[formId] = { ctx, requestState: result.requestState };
+}
+
+async function submitMrtr(targetId, formId, action) {
+    const rec = window.__mrtr && window.__mrtr[formId];
+    if (!rec) return;
+    const { ctx, requestState } = rec;
+    const inputs = Array.from(document.querySelectorAll('[data-mrtr="' + formId + '"]'));
+    const contentBy = {};
+    inputs.forEach(inp => {
+        const key = inp.dataset.key, prop = inp.dataset.prop, type = inp.dataset.type;
+        contentBy[key] = contentBy[key] || {};
+        if (type === 'boolean') contentBy[key][prop] = inp.checked;
+        else if (type === 'number') {
+            const v = inp.value;
+            contentBy[key][prop] = (v === '' || v == null) ? null : Number(v);
+        } else contentBy[key][prop] = inp.value;
+    });
+    const inputResponses = {};
+    Object.keys(contentBy).forEach(key => {
+        inputResponses[key] = { action, content: action === 'accept' ? contentBy[key] : {} };
+    });
+
+    const box = document.getElementById(formId);
+    if (box) box.querySelectorAll('button').forEach(b => b.disabled = true);
+    const area = document.getElementById(targetId);
+    area.insertAdjacentHTML('beforeend', '<div class="status status-info">Retrying ' + esc(ctx.name) + ' with ' + esc(action) + '...</div>');
+
+    const params = { name: ctx.name, arguments: ctx.arguments, inputResponses, requestState };
+    try {
+        const resp = await mcpCall(ctx.endpoint, ctx.token || null, 'tools/call', params, ctx.progressToken, n => updateProgress('progress-' + targetId, n), ctx.toolDef || null);
+        const result = unwrap(resp, 'tools/call');
+        const note = area.querySelector('.status-info:last-of-type');
+        if (note) note.remove();
+        if (result.resultType === 'input_required') {
+            renderMrtr(targetId, ctx, result);
+        } else {
+            renderToolResult(targetId, result);
+            const done = document.createElement('div');
+            done.className = 'status status-ok';
+            done.textContent = 'MRTR retry \u2192 resultType: ' + (result.resultType || 'complete');
+            area.insertBefore(done, area.firstChild);
+        }
+    } catch (e) {
+        handleCallError(area, e, ctx.name);
+    }
+}
+
+// ===================== 4. Live feed =====================
+let listenReader = null;
+let listenAbort = null;
+
+async function openListen() {
+    const feed = document.getElementById('feed-lines');
+    const statusEl = document.getElementById('feed-status');
+    const openBtn = document.getElementById('feed-open-btn');
+    const closeBtn = document.getElementById('feed-close-btn');
+    feed.innerHTML = '';
+    statusEl.className = 'status status-info';
+    statusEl.textContent = 'Opening subscription...';
+    openBtn.disabled = true;
+
+    const params = {
+        notifications: {
+            toolsListChanged: true,
+            promptsListChanged: true,
+            resourcesListChanged: true,
+            resourceSubscriptions: ['weather:///current']
+        }
+    };
+    const p = { ...params };
+    p._meta = baseMeta();
+    const body = { jsonrpc: '2.0', id: nextId(), method: 'subscriptions/listen', params: p };
+    logRequest('subscriptions/listen', body);
+
+    const abort = new AbortController();
+    listenAbort = abort;
+    try {
+        const resp = await fetch(PUBLIC_ENDPOINT, {
+            method: 'POST',
+            headers: mcpHeaders('subscriptions/listen', p),
+            body: JSON.stringify(body),
+            signal: abort.signal
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + resp.statusText);
+        statusEl.className = 'status status-ok';
+        statusEl.textContent = 'Listening (subscription #' + body.id + ')';
+        closeBtn.disabled = false;
+        listenReader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        while (true) {
+            const { done, value } = await listenReader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            let idx;
+            while ((idx = buf.indexOf('\n\n')) !== -1) {
+                const raw = buf.slice(0, idx);
+                buf = buf.slice(idx + 2);
+                const obj = parseSseFrame(raw);
+                if (obj) pushFeed(obj);
+            }
+        }
+        statusEl.className = 'status status-info';
+        statusEl.textContent = 'Stream closed';
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            statusEl.className = 'status status-info';
+            statusEl.textContent = 'Subscription closed';
+        } else {
+            statusEl.className = 'status status-err';
+            statusEl.textContent = 'Listen failed: ' + e.message;
+            toast('subscriptions/listen failed: ' + e.message, 'err');
+        }
+    } finally {
+        listenReader = null;
+        listenAbort = null;
+        openBtn.disabled = false;
+        closeBtn.disabled = true;
+    }
+}
+
+function closeListen() {
+    if (listenAbort) listenAbort.abort();
+}
+
+function pushFeed(obj) {
+    const feed = document.getElementById('feed-lines');
+    const line = document.createElement('div');
+    line.className = 'feed-line';
+    if (obj.method === 'notifications/subscriptions/acknowledged') line.classList.add('ack');
+    if (obj.method === 'notifications/resources/updated') line.classList.add('updated');
+    const meta = (obj.params && obj.params._meta) || obj._meta || {};
+    const subId = meta['io.modelcontextprotocol/subscriptionId'];
+    line.innerHTML =
+        '<div class="feed-head">' +
+        '<span class="feed-method">' + esc(obj.method || '(response)') + '</span>' +
+        (subId != null ? '<span class="feed-sub">sub #' + esc(String(subId)) + '</span>' : '') +
+        '<span class="feed-ts">' + nowTs() + '</span></div>' +
+        '<pre class="feed-payload">' + highlightJson(obj.params != null ? obj.params : obj) + '</pre>';
+    feed.appendChild(line);
+    logNotification(obj);
+    feed.scrollTop = feed.scrollHeight;
+}
+
+async function triggerRefresh() {
+    const token = (document.getElementById('admin-token').value || '').trim();
+    if (!token) {
+        toast('Admin token required \u2014 log in on the Admin tab first.', 'err');
+        return;
+    }
+    try {
+        const resp = await mcpCall(ADMIN_ENDPOINT, token, 'tools/call', { name: 'refresh_station_data', arguments: {} });
+        const r = unwrap(resp, 'tools/call');
+        const text = r.content && r.content.length ? r.content.map(c => c.text).join('\n') : JSON.stringify(r);
+        toast('refresh_station_data: ' + text, 'ok');
+    } catch (e) {
+        toast('refresh_station_data failed: ' + e.message, 'err');
+    }
+}
+
+// ===================== 5. Resources =====================
+const resourceCache = {}; // uri -> { result, ts, ttlMs }
+
+async function loadResources() {
+    const container = document.getElementById('resources-list');
+    const tContainer = document.getElementById('templates-list');
+    container.innerHTML = '<p style="color:#888;">Loading resources...</p>';
+    try {
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'resources/list', {});
+        const r = unwrap(resp, 'resources/list');
+        const resources = r.resources || [];
+        container.innerHTML = resources.map(res => `
+            <div class="card">
+                <h3>${esc(res.name || res.uri)}
+                    ${res.mimeType ? '<span class="badge badge-purple">' + esc(res.mimeType) + '</span>' : ''}
+                </h3>
+                <p>${esc(res.description || '')}</p>
+                <p style="font-family:monospace; font-size:0.8rem; color:#888; margin-top:0.25rem;">${esc(res.uri)}</p>
+                <div class="annotations" style="margin-top:0.5rem;">
+                    <span class="badge badge-gray">ttlMs ${esc(String(r.ttlMs != null ? r.ttlMs : 'n/a'))}</span>
+                    <span class="badge badge-gray">cacheScope ${esc(String(r.cacheScope != null ? r.cacheScope : 'n/a'))}</span>
+                </div>
+                <div class="input-group">
+                    <label>Read URI:</label>
+                    <input type="text" class="mono" id="readuri-${esc(b64(res.uri))}" value="${esc(res.uri)}">
+                </div>
+                <button class="btn btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="readResourceFromInput('${esc(b64(res.uri))}')">Read</button>
+                <div id="res-${esc(b64(res.uri))}"></div>
+            </div>`).join('') || '<p style="color:#888;">No static resources found.</p>';
+
+        const tResp = await mcpCall(PUBLIC_ENDPOINT, null, 'resources/templates/list', {});
+        const t = unwrap(tResp, 'resources/templates/list');
+        const templates = t.resourceTemplates || [];
+        tContainer.innerHTML = templates.map(tpl => `
+            <div class="card">
+                <h3>${esc(tpl.name || tpl.uriTemplate)}</h3>
+                <p>${esc(tpl.description || '')}</p>
+                <p style="font-family:monospace; font-size:0.8rem; color:#888; margin-top:0.25rem;">${esc(tpl.uriTemplate)}</p>
+                <div class="input-group">
+                    <label>URI:</label>
+                    <input type="text" class="mono" id="tmpl-${esc(b64(tpl.uriTemplate))}" placeholder="${esc(tpl.uriTemplate.replace(/\{[^}]+\}/g, 'value'))}">
+                </div>
+                <button class="btn btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="readTemplateResource('${esc(b64(tpl.uriTemplate))}')">Read</button>
+                <div id="tmpl-res-${esc(b64(tpl.uriTemplate))}"></div>
+            </div>`).join('') || '<p style="color:#888;">No resource templates found.</p>';
+    } catch (e) {
+        container.innerHTML = '<p style="color:#9e1a1a;">Failed: ' + esc(e.message) + '</p>';
+        toast('resources/list failed: ' + e.message, 'err');
+    }
+}
+
+function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
+
+function resourceText(contents) {
+    const text = (contents || []).map(c => c.text != null ? c.text : (c.blob != null ? 'blob' : JSON.stringify(c))).join('\n');
+    try { return JSON.stringify(JSON.parse(text), null, 2); } catch (e) { return text; }
+}
+
+async function readResourceFromInput(b64uri) {
+    const input = document.getElementById('readuri-' + b64uri);
+    const uri = input ? input.value.trim() : '';
+    if (!uri) { toast('Enter a URI to read', 'err'); return; }
+    await doReadResource(uri, 'res-' + b64uri);
 }
 
 async function readTemplateResource(b64template) {
     const input = document.getElementById('tmpl-' + b64template);
-    const uri = input.value.trim();
-    if (!uri) { alert('Please fill in the URI'); return; }
-    const el = document.getElementById('tmpl-res-' + b64template);
-    el.style.display = 'block';
-    el.textContent = 'Loading...';
-    try {
-        const resp = await mcpRequest('resources/read', { uri });
-        const contents = resp?.result?.contents || [];
-        const text = contents.map(c => c.text || c.blob || '').join('\n');
-        try { el.textContent = JSON.stringify(JSON.parse(text), null, 2); }
-        catch { el.textContent = text; }
-    } catch (e) { el.textContent = 'Error: ' + e.message; }
+    const uri = input ? input.value.trim() : '';
+    if (!uri) { toast('Fill in the template URI', 'err'); return; }
+    await doReadResource(uri, 'tmpl-res-' + b64template);
 }
 
+async function doReadResource(uri, targetId) {
+    const el = document.getElementById(targetId);
+    el.innerHTML = '<div class="status status-info">Reading...</div>';
+    const now = Date.now();
+    const cached = resourceCache[uri];
+    if (cached && cached.ttlMs > 0 && (now - cached.ts) < cached.ttlMs) {
+        const ageS = ((now - cached.ts) / 1000).toFixed(1);
+        el.innerHTML = '<div class="status status-ok">served from explorer cache (age ' + ageS + 's, ttl ' + cached.ttlMs + 'ms)</div>' +
+            '<div class="result-box">' + esc(resourceText(cached.result.contents)) + '</div>';
+        return;
+    }
+    try {
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'resources/read', { uri });
+        const r = unwrap(resp, 'resources/read');
+        const ttlMs = r.ttlMs != null ? r.ttlMs : 0;
+        resourceCache[uri] = { result: r, ts: Date.now(), ttlMs };
+        el.innerHTML = '<div class="status status-info">fetched \u2014 ttlMs ' + ttlMs +
+            (r.cacheScope ? ', cacheScope ' + esc(String(r.cacheScope)) : '') + '</div>' +
+            '<div class="result-box">' + esc(resourceText(r.contents)) + '</div>';
+    } catch (e) {
+        el.innerHTML = '<div class="status status-err">' + esc(e.message) + '</div>';
+        toast('resources/read failed: ' + e.message, 'err');
+    }
+}
+
+// ===================== 6. Prompts =====================
 async function loadPrompts() {
-    const resp = await mcpRequest('prompts/list');
-    const prompts = resp?.result?.prompts || [];
     const container = document.getElementById('prompts-list');
-    container.innerHTML = prompts.map(p => `
-        <div class="card">
-            <h3>${p.name}</h3>
-            <p>${p.description || ''}</p>
-            ${(p.arguments || []).map(arg => `
-                <div class="input-group">
-                    <label>${arg.name}${arg.required ? '*' : ''}:</label>
-                    <input type="text" id="prompt-${p.name}-${arg.name}"
-                           placeholder="${arg.description || arg.name}${arg.defaultValue ? ' (default: ' + arg.defaultValue + ')' : ''}">
+    container.innerHTML = '<p style="color:#888;">Loading prompts...</p>';
+    try {
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'prompts/list', {});
+        const r = unwrap(resp, 'prompts/list');
+        const prompts = r.prompts || [];
+        container.innerHTML = prompts.map(p => `
+            <div class="card">
+                <h3>${esc(p.name)}</h3>
+                <p>${esc(p.description || '')}</p>
+                ${((p.arguments) || []).map(arg => `
+                    <div class="input-group">
+                        <label>${esc(arg.name)}${arg.required ? ' <span style="color:#ee0000">*</span>' : ''}:</label>
+                        <input type="text" id="prompt-${esc(p.name)}-${esc(arg.name)}"
+                               placeholder="${esc(arg.description || arg.name)}${arg.defaultValue ? ' (default: ' + esc(arg.defaultValue) + ')' : ''}">
+                    </div>`).join('')}
+                <div style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" onclick="getPrompt('${esc(p.name)}')">Get Prompt</button>
+                    ${p.name === 'device_diagnostics' ? '<button class="btn btn-secondary btn-sm" onclick="completeDeviceId()">completion/complete (deviceId)</button>' : ''}
                 </div>
-            `).join('')}
-            <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="getPrompt('${p.name}')">Get Prompt</button>
-            <div id="prompt-result-${p.name}" class="prompt-messages" style="display:none;"></div>
-        </div>
-    `).join('') || '<p style="color:#888;">No prompts found.</p>';
+                <div id="prompt-result-${esc(p.name)}"></div>
+            </div>`).join('') || '<p style="color:#888;">No prompts found.</p>';
+    } catch (e) {
+        container.innerHTML = '<p style="color:#9e1a1a;">Failed: ' + esc(e.message) + '</p>';
+        toast('prompts/list failed: ' + e.message, 'err');
+    }
+}
+
+function promptArgs(name) {
+    const inputs = document.querySelectorAll('[id^="prompt-' + name + '-"]');
+    const args = {};
+    inputs.forEach(input => {
+        const argName = input.id.slice(('prompt-' + name + '-').length);
+        if (input.value.trim()) args[argName] = input.value.trim();
+    });
+    return args;
 }
 
 async function getPrompt(name) {
     const el = document.getElementById('prompt-result-' + name);
-    el.style.display = 'block';
     el.innerHTML = '<p style="color:#888;">Loading...</p>';
     try {
-        const inputs = document.querySelectorAll(`[id^="prompt-${name}-"]`);
-        const args = {};
-        inputs.forEach(input => {
-            if (input.value.trim()) {
-                const argName = input.id.replace(`prompt-${name}-`, '');
-                args[argName] = input.value.trim();
-            }
+        const args = promptArgs(name);
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'prompts/get', { name, arguments: args });
+        const r = unwrap(resp, 'prompts/get');
+        const messages = r.messages || [];
+        const html = messages.map(m => `
+            <div class="prompt-msg prompt-msg-${esc(m.role)}"><strong>${esc(m.role)}:</strong> ${esc(m.content && m.content.text != null ? m.content.text : JSON.stringify(m.content))}</div>
+        `).join('');
+        el.innerHTML = html ? '<div class="prompt-messages">' + html + '</div>' : '<p style="color:#888;">No messages returned.</p>';
+    } catch (e) {
+        el.innerHTML = '<p style="color:#9e1a1a;">Error: ' + esc(e.message) + '</p>';
+        toast('prompts/get failed: ' + e.message, 'err');
+    }
+}
+
+async function completeDeviceId() {
+    const prefixInput = document.getElementById('prompt-device_diagnostics-deviceId');
+    const value = prefixInput ? prefixInput.value.trim() : '';
+    const el = document.getElementById('prompt-result-device_diagnostics');
+    try {
+        const resp = await mcpCall(PUBLIC_ENDPOINT, null, 'completion/complete', {
+            ref: { type: 'ref/prompt', name: 'device_diagnostics' },
+            argument: { name: 'deviceId', value: value }
         });
-        const resp = await mcpRequest('prompts/get', { name, arguments: args });
-        const messages = resp?.result?.messages || [];
-        el.innerHTML = messages.map(m => `
-            <div class="prompt-msg prompt-msg-${m.role}">
-                <strong>${m.role}:</strong> ${m.content?.text || JSON.stringify(m.content)}
-            </div>
-        `).join('') || '<p style="color:#888;">No messages returned.</p>';
-    } catch (e) { el.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`; }
+        const r = unwrap(resp, 'completion/complete');
+        const comp = r.completion || {};
+        const values = comp.values || [];
+        el.innerHTML = '<div class="status status-info">completion/complete \u2014 ' + values.length + ' match(es) for "' + esc(value) + '"</div>' +
+            '<div class="result-box">' + esc(JSON.stringify(comp, null, 2)) + '</div>';
+    } catch (e) {
+        el.innerHTML = '<div class="status status-err">' + esc(e.message) + '</div>';
+        toast('completion/complete failed: ' + e.message, 'err');
+    }
+}
+
+// ===================== 7. Admin =====================
+// Keycloak dev services use a random localhost port per run. Discover the live
+// auth-server-url from the app's dev-mcp endpoint (/q/dev-mcp, dev mode only),
+// falling back to scanning the well-known dev/prod ports.
+async function discoverKeycloakUrl() {
+    try {
+        const resp = await fetch('/q/dev-mcp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: nextId(), method: 'devui-dev-services_getDevServices' })
+        });
+        if (resp.ok) {
+            let j = await resp.json();
+            if (j.result && j.result.content) {
+                const t = (j.result.content.find(c => c.text) || {}).text;
+                if (t) j = JSON.parse(t);
+            }
+            const svc = (Array.isArray(j) ? j : []).find(s => s && s.name === 'oidc');
+            const url = svc && svc.configs && svc.configs['quarkus.oidc.auth-server-url'];
+            if (url) return url.replace(/\/+$/, '');
+        }
+    } catch (e) { /* dev mode only; fall through to port scan */ }
+    for (const port of [46737, 8180, 8080, 8081, 8181]) {
+        const base = 'http://localhost:' + port + '/realms/quarkus';
+        try {
+            const r = await fetch(base + '/.well-known/openid-configuration', { method: 'GET' });
+            if (r.ok) return base;
+        } catch (e) { /* try next port */ }
+    }
+    return null;
+}
+
+async function requestKeycloakToken(kcBase) {
+    const resp = await fetch(kcBase + '/protocol/openid-connect/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'grant_type=password&client_id=quarkus-app&client_secret=secret&username=alice&password=alice'
+    });
+    if (!resp.ok) throw new Error('Keycloak token request failed (HTTP ' + resp.status + ') at ' + kcBase);
+    return resp.json();
 }
 
 async function fetchKeycloakToken() {
     const statusEl = document.getElementById('admin-status');
-    statusEl.textContent = 'Fetching token from Keycloak...';
-    statusEl.className = 'status status-ok';
+    statusEl.className = 'status status-info';
+    statusEl.textContent = 'Discovering Keycloak dev services...';
     try {
-        const resp = await fetch('/q/oidc/token', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'grant_type=password&username=alice&password=alice' });
-        if (!resp.ok) {
-            const kcResp = await fetch('http://localhost:8180/realms/quarkus/protocol/openid-connect/token', {
-                method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'grant_type=password&client_id=quarkus-app&client_secret=secret&username=alice&password=alice'
-            });
-            if (!kcResp.ok) throw new Error('Could not reach Keycloak. Is dev mode running?');
-            const data = await kcResp.json();
-            document.getElementById('admin-token').value = data.access_token;
-            statusEl.textContent = 'Token acquired from Keycloak (alice, admin role)';
-            return;
-        }
-        const data = await resp.json();
+        const kcBase = await discoverKeycloakUrl();
+        if (!kcBase) throw new Error('Could not find the Keycloak dev service port. Paste a token manually.');
+        statusEl.textContent = 'Fetching token from ' + kcBase + ' ...';
+        const data = await requestKeycloakToken(kcBase);
         document.getElementById('admin-token').value = data.access_token;
-        statusEl.textContent = 'Token acquired (alice, admin role)';
+        statusEl.className = 'status status-ok';
+        statusEl.textContent = 'Token acquired (alice, admin role) from ' + kcBase;
     } catch (e) {
-        statusEl.textContent = 'Failed to get token: ' + e.message;
         statusEl.className = 'status status-err';
+        statusEl.textContent = 'Failed to get token: ' + e.message;
     }
 }
+
+function adminToken() { return (document.getElementById('admin-token').value || '').trim(); }
 
 async function initAdmin() {
-    const token = document.getElementById('admin-token').value.trim();
+    const token = adminToken();
     const statusEl = document.getElementById('admin-status');
-    if (!token) { statusEl.textContent = 'Please provide a token first'; statusEl.className = 'status status-err'; return; }
-    try {
-        await initialize('/admin/mcp', token);
-        statusEl.textContent = 'Connected to admin MCP server';
-        statusEl.className = 'status status-ok';
-        await loadAdminTools(token);
-    } catch (e) {
-        statusEl.textContent = 'Failed: ' + e.message;
+    if (!token) {
         statusEl.className = 'status status-err';
+        statusEl.textContent = 'Please provide a token first';
+        return;
+    }
+    statusEl.className = 'status status-info';
+    statusEl.textContent = 'Connecting to admin server...';
+    try {
+        await mcpCall(ADMIN_ENDPOINT, token, 'server/discover', {});
+        statusEl.className = 'status status-ok';
+        statusEl.textContent = 'Connected to admin MCP server';
+        await loadAdminTools();
+    } catch (e) {
+        statusEl.className = 'status status-err';
+        statusEl.textContent = 'Failed: ' + e.message + (e.status === 401 ? ' (token invalid or missing admin role)' : '');
+        toast('Admin connect failed: ' + e.message, 'err');
     }
 }
 
-async function loadAdminTools(token) {
-    const resp = await mcpRequest('tools/list', {}, '/admin/mcp', token);
-    const tools = resp?.result?.tools || [];
+async function loadAdminTools() {
+    const token = adminToken();
     const container = document.getElementById('admin-tools-list');
-    container.innerHTML = tools.map(tool => `
-        <div class="card">
-            <h3>
-                ${tool.name}
-                ${tool.annotations?.title ? `<span class="badge badge-blue">${tool.annotations.title}</span>` : ''}
-                <span class="badge badge-purple">admin</span>
-            </h3>
-            <p>${tool.description || ''}</p>
-            <div class="annotations">
-                ${tool.annotations?.readOnlyHint ? '<span class="badge badge-green">read-only</span>' : ''}
-                ${tool.annotations?.readOnlyHint === false ? '<span class="badge badge-orange">read-write</span>' : ''}
-                ${tool.annotations?.idempotentHint ? '<span class="badge badge-green">idempotent</span>' : ''}
-                ${tool.annotations?.openWorldHint ? '<span class="badge badge-orange">open-world</span>' : ''}
-            </div>
-            <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="callAdminTool('${tool.name}')">Call Tool</button>
-            <div id="admin-result-${tool.name}" class="result-box" style="display:none;"></div>
-        </div>
-    `).join('') || '<p style="color:#888;">No admin tools found.</p>';
+    container.innerHTML = '<p style="color:#888;">Loading admin tools...</p>';
+    try {
+        const resp = await mcpCall(ADMIN_ENDPOINT, token, 'tools/list', {});
+        const r = unwrap(resp, 'tools/list');
+        const tools = r.tools || [];
+        window.__adminTools = window.__adminTools || {};
+        tools.forEach(t => { window.__adminTools[t.name] = t; });
+        container.innerHTML = tools.map(tool => `
+            <div class="card">
+                <h3>${esc(tool.name)}
+                    ${tool.annotations && tool.annotations.title ? '<span class="badge badge-blue">' + esc(tool.annotations.title) + '</span>' : ''}
+                    <span class="badge badge-purple">admin</span>
+                </h3>
+                <p>${esc(tool.description || '')}</p>
+                <div class="annotations">${annotationBadges(tool.annotations)}</div>
+                <textarea class="args" id="admin-args-${esc(tool.name)}">${esc(JSON.stringify(defaultArgs(tool), null, 2))}</textarea>
+                <div style="margin-top:0.75rem;">
+                    <button class="btn btn-primary btn-sm" id="admin-call-${esc(tool.name)}" onclick="callAdminTool('${esc(tool.name)}')">Call Tool</button>
+                </div>
+                <div id="admin-result-${esc(tool.name)}"></div>
+            </div>`).join('') || '<p style="color:#888;">No admin tools found.</p>';
+    } catch (e) {
+        container.innerHTML = '<p style="color:#9e1a1a;">Failed: ' + esc(e.message) + (e.status === 401 ? ' \u2014 check the token.' : '') + '</p>';
+        toast('admin tools/list failed: ' + e.message, 'err');
+    }
 }
 
 async function callAdminTool(name) {
-    const token = document.getElementById('admin-token').value.trim();
-    const el = document.getElementById('admin-result-' + name);
-    el.style.display = 'block';
-    el.textContent = 'Calling...';
+    const token = adminToken();
+    const area = document.getElementById('admin-result-' + name);
+    const btn = document.getElementById('admin-call-' + name);
+    if (!token) { toast('Admin token required', 'err'); return; }
+    let args = {};
+    const ta = document.getElementById('admin-args-' + name);
+    if (ta && ta.value.trim()) {
+        try { args = JSON.parse(ta.value); }
+        catch (e) { area.innerHTML = '<div class="status status-err">Invalid args JSON: ' + esc(e.message) + '</div>'; return; }
+    }
+    area.innerHTML = '<div class="status status-info">Calling ' + esc(name) + '...</div>';
+    if (btn) btn.disabled = true;
+    const progressToken = 'aprogr-' + nextId();
+    const toolDef = (window.__adminTools || {})[name] || null;
     try {
-        const resp = await mcpRequest('tools/call', { name, arguments: {} }, '/admin/mcp', token);
-        const result = resp?.result;
-        if (result?.isError) {
-            el.textContent = 'ERROR: ' + (result.content?.[0]?.text || 'Unknown error');
+        const resp = await mcpCall(ADMIN_ENDPOINT, token, 'tools/call', { name, arguments: args }, progressToken, n => updateProgress('progress-admin-result-' + name, n), toolDef);
+        const r = unwrap(resp, 'tools/call');
+        area.innerHTML = '';
+        if (r.resultType === 'input_required') {
+            renderMrtr('admin-result-' + name, { name, arguments: args, progressToken, endpoint: ADMIN_ENDPOINT, token, toolDef }, r);
         } else {
-            el.textContent = result?.content?.[0]?.text || JSON.stringify(result, null, 2);
+            renderToolResult('admin-result-' + name, r);
         }
-    } catch (e) { el.textContent = 'Error: ' + e.message; }
+    } catch (e) {
+        handleCallError(area, e, name);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
 }
 
-// Tab switching
+// ===================== tabs / boot =====================
+const loaded = {};
+function ensureLoaded(panel) {
+    if (loaded[panel]) return;
+    loaded[panel] = true;
+    if (panel === 'tools') loadTools();
+    else if (panel === 'resources') loadResources();
+    else if (panel === 'prompts') loadPrompts();
+}
+
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById(tab.dataset.panel).classList.add('active');
+        ensureLoaded(tab.dataset.panel);
     });
 });
 
-init();
+(async function boot() {
+    await discover();
+})();
 </script>
 </body>
 </html>

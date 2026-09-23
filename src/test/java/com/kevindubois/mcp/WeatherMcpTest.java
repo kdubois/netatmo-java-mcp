@@ -127,10 +127,27 @@ public class WeatherMcpTest {
 
         client.when()
             .promptsList(page -> {
-                assertTrue(page.size() >= 3, "Should have at least 3 prompts");
+                assertEquals(2, page.size(), "Should have exactly 2 prompts");
                 assertNotNull(page.findByName("weather_summary"));
-                assertNotNull(page.findByName("weather_comparison"));
                 assertNotNull(page.findByName("device_diagnostics"));
+            })
+            .thenAssertResults();
+
+        client.disconnect();
+    }
+
+    @Test
+    void testToolsListHasTtlMs() {
+        McpStreamableTestClient client = McpAssured.newStreamableClient()
+            .setMcpPath("/mcp")
+            .setStateless()
+            .build()
+            .connect();
+
+        client.when()
+            .toolsList(page -> {
+                assertNotNull(page.cacheControl(), "tools/list should carry a cache hint");
+                assertEquals(60000L, page.cacheControl().ttlMs(), "tools ttlMs should be 60000");
             })
             .thenAssertResults();
 

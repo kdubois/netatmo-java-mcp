@@ -1,9 +1,11 @@
 package com.kevindubois.mcp;
 
+import io.quarkiverse.mcp.server.CacheScope;
 import io.quarkiverse.mcp.server.McpLog;
 import io.quarkiverse.mcp.server.RequestUri;
 import io.quarkiverse.mcp.server.Resource;
 import io.quarkiverse.mcp.server.Resource.Annotations;
+import io.quarkiverse.mcp.server.Resource.CacheControl;
 import io.quarkiverse.mcp.server.ResourceTemplate;
 import io.quarkiverse.mcp.server.Role;
 import io.quarkiverse.mcp.server.TextResourceContents;
@@ -21,7 +23,8 @@ public class WeatherMcpResources {
 
     @Resource(uri = "weather:///current",
               description = "Current weather conditions from the Netatmo weather station including indoor/outdoor readings",
-              annotations = @Annotations(audience = Role.ASSISTANT, priority = 1.0))
+              annotations = @Annotations(audience = Role.ASSISTANT, priority = 1.0),
+              cacheControl = @CacheControl(ttlMs = 60000, cacheScope = CacheScope.PRIVATE))
     public TextResourceContents currentWeather(RequestUri uri, McpLog log) {
         log.info("Reading current weather resource");
 
@@ -42,7 +45,8 @@ public class WeatherMcpResources {
 
     @Resource(uri = "weather:///devices",
               description = "List of available Netatmo weather station devices",
-              annotations = @Annotations(audience = Role.ASSISTANT, priority = 0.8))
+              annotations = @Annotations(audience = Role.ASSISTANT, priority = 0.8),
+              cacheControl = @CacheControl(ttlMs = 60000, cacheScope = CacheScope.PRIVATE))
     public TextResourceContents devices(RequestUri uri, McpLog log) {
         log.info("Reading devices resource");
 
@@ -63,7 +67,8 @@ public class WeatherMcpResources {
 
     @ResourceTemplate(uriTemplate = "weather:///{deviceId}/current",
                       description = "Current weather data for a specific device by its ID",
-                      annotations = @Annotations(audience = Role.ASSISTANT, priority = 0.9))
+                      annotations = @Annotations(audience = Role.ASSISTANT, priority = 0.9),
+                      cacheControl = @CacheControl(ttlMs = 60000, cacheScope = CacheScope.PRIVATE))
     public TextResourceContents deviceWeather(String deviceId, RequestUri uri, McpLog log) {
         log.info("Reading weather resource for device: %s", deviceId);
 

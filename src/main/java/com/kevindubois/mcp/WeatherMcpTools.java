@@ -1,5 +1,8 @@
 package com.kevindubois.mcp;
 
+import io.quarkiverse.mcp.server.Elicitation;
+import io.quarkiverse.mcp.server.ElicitationRequest;
+import io.quarkiverse.mcp.server.ElicitationResponse;
 import io.quarkiverse.mcp.server.McpLog;
 import io.quarkiverse.mcp.server.Progress;
 import io.quarkiverse.mcp.server.TextContent;
@@ -8,6 +11,7 @@ import io.quarkiverse.mcp.server.Tool.Annotations;
 import io.quarkiverse.mcp.server.ToolArg;
 import io.quarkiverse.mcp.server.ToolCallException;
 import io.quarkiverse.mcp.server.WrapBusinessError;
+import io.quarkiverse.mcp.server.http.McpParamHeader;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.Pattern;
@@ -35,8 +39,11 @@ public class WeatherMcpTools {
               destructiveHint = false,
               idempotentHint = true,
               openWorldHint = true))
-    public TextContent getCurrentWeather(McpLog log) {
-        log.info("Fetching current weather data from Netatmo API");
+    public TextContent getCurrentWeather(
+            @McpParamHeader("x-client-name")
+            @ToolArg(description = "Client display name (mirrored as the x-client-name HTTP header)", required = false) String clientName,
+            McpLog log) {
+        log.info("Fetching current weather data from Netatmo API (client-name: %s)", clientName);
 
         var apiResponse = weatherService.getCurrentWeather();
 
@@ -90,11 +97,17 @@ public class WeatherMcpTools {
             @ToolArg(description = "End date in format YYYY-MM-DD (default: current date)", required = false) String endDate,
             @ToolArg(description = "Maximum number of data points to return (default: 24)", required = false) String maxDataPoints,
             Progress progress,
-            McpLog log
+            McpLog log,
+            Elicitation elicitation
     ) {
         log.info("Requesting historical weather data");
 
         final Integer maxPoints = parseMaxDataPoints(maxDataPoints);
+        LocalDate begin = beginDate != null ? LocalDate.parse(beginDate) : LocalDate.now().minusDays(7);
+        LocalDate end = endDate != null ? LocalDate.parse(endDate) : LocalDate.now();
+        long days = ChronoUnit.DAYS.between(begin, end);
+        checkLargeRange(days, begin, end, elicitation);
+
         String effectiveScale = autoSelectScale(scale, beginDate, endDate);
         String effectiveSensorTypes = autoSelectSensorTypes(sensorTypes, effectiveScale);
 
@@ -124,6 +137,52 @@ public class WeatherMcpTools {
 
         log.info("Retrieved historical weather data (scale=%s, limit=%d)", effectiveScale, limit);
         return ApiResponse.success(data, "Successfully retrieved historical weather data").toTextContent();
+    }
+
+    private static final long MAX_RANGE_DAYS = 30;
+    private static final String CONFIRM_RANGE_KEY = "confirm_range";
+
+    private void checkLargeRange(long days, LocalDate begin, LocalDate end, Elicitation elicitation) {
+        if (days <= MAX_RANGE_DAYS) {
+            return;
+        }
+        if (elicitation.isServerInitiatedRequestSupported()) {
+            throw new ToolCallException(
+                "Requested range of " + days + " days is too large (max " + MAX_RANGE_DAYS + " days).");
+        }
+        // A client that does not declare the elicitation capability (e.g. the backend
+        // chat client) cannot answer an interactive confirm. Return a clean, actionable
+        // result instead of throwing a form-mode capability error it cannot act on.
+        if (!elicitation.isFormModeSupported()) {
+            throw new ToolCallException(
+                "Range of " + days + " days exceeds the " + MAX_RANGE_DAYS + "-day limit and this client " +
+                "cannot confirm it interactively, so it was not executed. Do not retry this call and do " +
+                "not shrink the range. Tell the user it needs a one-time confirmation and output the " +
+                "range-confirmation block using the exact dates you just used.");
+        }
+        if (elicitation.inputResponses().isEmpty()) {
+            throw elicitation.inputRequired()
+                .addElicitationRequest(CONFIRM_RANGE_KEY,
+                    elicitation.requestBuilder()
+                        .setMessage("The requested range covers " + days + " days. Fetch it anyway?")
+                        .addSchemaProperty("confirm",
+                            ElicitationRequest.BooleanSchema.builder()
+                                .setTitle("Confirm")
+                                .setDescription("Set to true to fetch the full range")
+                                .setRequired(true)
+                                .build())
+                        .build())
+                .setRequestState("confirm:" + begin + ":" + end)
+                .build();
+        }
+        if (elicitation.inputResponses().has(CONFIRM_RANGE_KEY)) {
+            ElicitationResponse r = elicitation.inputResponses().getElicitationResponse(CONFIRM_RANGE_KEY);
+            boolean confirm = r != null && r.actionAccepted()
+                && Boolean.TRUE.equals(r.content().getBoolean("confirm"));
+            if (!confirm) {
+                throw new ToolCallException("Range confirmation was declined.");
+            }
+        }
     }
 
     private void limitDataPoints(Map<String, Object> data, int maxPoints) {

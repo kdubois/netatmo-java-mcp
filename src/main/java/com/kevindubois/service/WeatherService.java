@@ -60,6 +60,9 @@ public class WeatherService {
     @RestClient
     NetatmoApiClient netatmoApiClient;
 
+    @Inject
+    NetatmoHistoricalDataFetcher historicalDataFetcher;
+
     /**
      * Fetch all weather stations data
      * @return The raw Netatmo stations data response
@@ -194,16 +197,30 @@ public class WeatherService {
                 return ApiResponse.error("No weather stations found", Response.Status.NOT_FOUND);
             }
             
-            // Map devices to DeviceInfo objects
-            var devices = response.getBody().getDevices().stream()
-                .map(device -> new DeviceInfo(
+            // Map devices to DeviceInfo objects. A Netatmo "station" is a main
+            // module (NAMain, typically indoor) that can carry outdoor sensor
+            // modules (NBOther) under modules. Include those nested modules so
+            // consumers can see the outdoor device, not just the main one.
+            var devices = new ArrayList<DeviceInfo>();
+            for (var device : response.getBody().getDevices()) {
+                devices.add(new DeviceInfo(
                     device.getId(),
                     device.getStationName(),
                     device.getType(),
                     device.getDataType()
-                ))
-                .collect(Collectors.toList());
-            
+                ));
+                if (device.getModules() != null) {
+                    for (var module : device.getModules()) {
+                        devices.add(new DeviceInfo(
+                            module.getId(),
+                            module.getModuleName(),
+                            module.getType(),
+                            module.getDataType()
+                        ));
+                    }
+                }
+            }
+
             // Create result and update cache
             ApiResponse<List<DeviceInfo>> result = ApiResponse.success(devices);
             cache.put(DEVICE_LIST_CACHE_KEY, new CacheEntry<>(result));
@@ -262,8 +279,9 @@ public class WeatherService {
                 currentHumidity = outdoorModule.getDashboardData().getHumidity();
             }
             
-            // Get historical data for the outdoor module
-            NetatmoHistoricalDataResponse outdoorResponse = netatmoApiClient.getHistoricalData(
+            // Get historical data for the outdoor module (resilient: retries transient
+            // Netatmo HTTP errors via SmallRye Fault Tolerance).
+            NetatmoHistoricalDataResponse outdoorResponse = historicalDataFetcher.getHistoricalData(
                 deviceId, moduleId, scale, sensorTypes, dateBegin, dateEnd, limit, true, true
             );
             
@@ -273,9 +291,10 @@ public class WeatherService {
             if (outdoorParsedData != null && outdoorParsedData.values != null) {
                 dataPoints = new ArrayList<>();
                 
+                int outdoorStep = effectiveStep(outdoorParsedData.stepTime, scale);
                 // Process outdoor data points
                 for (int i = 0; i < outdoorParsedData.values.size(); i++) {
-                    long timestamp = outdoorParsedData.beginTime + (i * outdoorParsedData.stepTime);
+                    long timestamp = outdoorParsedData.beginTime + (i * outdoorStep);
                     Object value = outdoorParsedData.values.get(i);
                     
                     List<Object> outdoorPoint = new ArrayList<>();
@@ -341,26 +360,35 @@ public class WeatherService {
                        ", scale=" + scale + ", type=" + sensorTypes +
                        ", date_begin=" + dateBegin + ", date_end=" + dateEnd + ", limit=" + limit);
 
-            // Get indoor data
-            NetatmoHistoricalDataResponse response = netatmoApiClient.getHistoricalData(
+            // Get indoor data (resilient: retries transient Netatmo HTTP errors)
+            NetatmoHistoricalDataResponse response = historicalDataFetcher.getHistoricalData(
                 deviceId, moduleId, scale, sensorTypes, dateBegin, dateEnd, limit, true, true
             );
 
             var parsedData = response.getParsedMeasurementData();
             if (parsedData == null) {
+                logger.severe("Could not parse measurement data from Netatmo response. status="
+                    + response.getStatus() + " body=" + response.getBody());
                 throw new WeatherApiException("Could not parse measurement data from Netatmo response",
                                             Response.Status.BAD_GATEWAY);
             }
 
             // Get outdoor module data
             OutdoorModuleData outdoorData = fetchOutdoorModuleData(deviceId, dateBegin, dateEnd, scale, sensorTypes, limit);
-            
+
+            // Split the sensor type string into an ordered list for correct column mapping
+            List<String> sensorTypeList = java.util.Arrays.asList(sensorTypes.split(","));
+
+            // step_time is absent from single-point responses; derive it from the scale.
+            int stepSeconds = effectiveStep(parsedData.stepTime, scale);
+
             // Process and combine data points
             List<Object> dataPoints = WeatherUtil.processDataPoints(
                 parsedData,
                 outdoorData != null ? outdoorData.dataPoints() : null,
                 parsedData.beginTime,
-                parsedData.stepTime
+                stepSeconds,
+                sensorTypeList
             );
 
             // Build result map
@@ -373,16 +401,21 @@ public class WeatherService {
             resultMap.put("endTimeTimestamp", dateEnd);
             resultMap.put("beginTime", WeatherUtil.formatTimestamp(dateBegin, "yyyy-MM-dd HH:mm:ss"));
             resultMap.put("endTime", WeatherUtil.formatTimestamp(dateEnd, "yyyy-MM-dd HH:mm:ss"));
-            resultMap.put("stepTime", parsedData.stepTime);
+            resultMap.put("stepTime", stepSeconds);
             resultMap.put("values", dataPoints);
             resultMap.put("totalDataPoints", dataPoints != null ? dataPoints.size() : 0);
             
-            // Add outdoor data if available
+            // Add outdoor data if available. When it is absent (e.g. the outdoor module
+            // fetch failed) the values still carry no outdoorMin/outdoorMax, so call out
+            // the degradation explicitly instead of letting callers see a "successful"
+            // indoor-only result.
             if (outdoorData != null) {
                 resultMap.put("outdoorModuleId", outdoorData.moduleId());
                 resultMap.put("outdoorModuleName", outdoorData.moduleName());
                 resultMap.put("outdoorTemperature", outdoorData.currentTemperature());
                 resultMap.put("outdoorHumidity", outdoorData.currentHumidity());
+            } else if (outdoorData.dataPoints() == null || outdoorData.dataPoints().isEmpty()) {
+                resultMap.put("outdoorDataAvailable", false);
             }
             
             return ApiResponse.success(resultMap);
@@ -400,6 +433,25 @@ public class WeatherService {
      * @param beginDate Date string in format YYYY-MM-DD
      * @return Timestamp in seconds since epoch
      */
+    /**
+     * Resolve the step in seconds for a response. Netatmo omits step_time when a
+     * range yields a single data point, so fall back to the scale's step.
+     */
+    private int effectiveStep(Integer stepTime, String scale) {
+        if (stepTime != null) {
+            return stepTime;
+        }
+        return switch (scale == null ? "" : scale) {
+            case "30min" -> 1800;
+            case "1hour" -> 3600;
+            case "3hours" -> 10800;
+            case "1day" -> 86400;
+            case "1week" -> 604800;
+            case "1month" -> 2592000;
+            default -> 86400;
+        };
+    }
+
     private Long parseBeginDate(String beginDate) {
         if (beginDate != null && !beginDate.trim().isEmpty()) {
             // Use the utility method to parse the date

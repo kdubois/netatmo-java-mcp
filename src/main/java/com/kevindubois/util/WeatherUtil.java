@@ -70,58 +70,117 @@ public class WeatherUtil {
     }
     
     /**
-     * Process and combine data points from historical measurements
+     * Process and combine data points from historical measurements.
+     *
+     * @param parsedData The parsed measurement data
+     * @param outdoorDataPoints List of outdoor data points ([timestamp, val0, val1, ...] per point)
+     * @param beginTimeTimestamp The beginning timestamp in epoch seconds
+     * @param stepTime The time step between measurements in seconds
+     * @param sensorTypes Ordered sensor type names requested (e.g. ["min_temp","max_temp"] or
+     *                    ["Temperature","CO2","Humidity"]), or null to fall back to positional defaults
+     * @return List of processed data point maps
+     */
+    public static List<Object> processDataPoints(
+            NetatmoMeasurementData parsedData,
+            List<List<Object>> outdoorDataPoints,
+            long beginTimeTimestamp,
+            int stepTime,
+            List<String> sensorTypes) {
+
+        List<Object> result = new ArrayList<>();
+
+        if (parsedData.values != null) {
+            for (int i = 0; i < parsedData.values.size(); i++) {
+                long timestamp = beginTimeTimestamp + (i * stepTime);
+                Object indoorValue = parsedData.values.get(i);
+
+                // Format timestamp as ISO string (yyyy-MM-dd HH:mm) using UTC
+                String formattedTimestamp = formatTimestamp(timestamp, "yyyy-MM-dd HH:mm");
+
+                // Create a map for this data point
+                Map<String, Object> dataPoint = new HashMap<>();
+                dataPoint.put("timestamp", formattedTimestamp);
+
+                // Add indoor values
+                if (indoorValue instanceof List<?>) {
+                    List<?> indoorValues = (List<?>) indoorValue;
+                    for (int j = 0; j < indoorValues.size(); j++) {
+                        Object raw = indoorValues.get(j);
+                        if (raw == null) continue;
+                        String sensorType = (sensorTypes != null && j < sensorTypes.size())
+                                ? sensorTypes.get(j).trim().toLowerCase()
+                                : null;
+                        if ("min_temp".equals(sensorType)) {
+                            dataPoint.put("indoorMinTemperature", raw);
+                        } else if ("max_temp".equals(sensorType)) {
+                            dataPoint.put("indoorMaxTemperature", raw);
+                        } else if ("min_hum".equals(sensorType)) {
+                            dataPoint.put("indoorMinHumidity", raw);
+                        } else if ("max_hum".equals(sensorType)) {
+                            dataPoint.put("indoorMaxHumidity", raw);
+                        } else if ("co2".equals(sensorType)) {
+                            dataPoint.put("indoorCO2", raw);
+                        } else if ("pressure".equals(sensorType)) {
+                            dataPoint.put("indoorPressure", raw);
+                        } else if ("noise".equals(sensorType)) {
+                            dataPoint.put("indoorNoise", raw);
+                        } else if ("humidity".equals(sensorType)) {
+                            dataPoint.put("indoorHumidity", raw);
+                        } else if ("temperature".equals(sensorType)) {
+                            dataPoint.put("indoorTemperature", raw);
+                        } else {
+                            if (j == 0) dataPoint.put("indoorTemperature", raw);
+                            else if (j == 1) dataPoint.put("indoorHumidity", raw);
+                            else if (j == 2) dataPoint.put("indoorPressure", raw);
+                        }
+                    }
+                }
+
+                // Add outdoor values if available
+                if (outdoorDataPoints != null && i < outdoorDataPoints.size()) {
+                    List<Object> outdoorPoint = outdoorDataPoints.get(i);
+                    // outdoorPoint[0] is the timestamp; sensor values start at index 1
+                    for (int j = 1; j < outdoorPoint.size(); j++) {
+                        Object raw = outdoorPoint.get(j);
+                        if (raw == null) continue;
+                        String sensorType = (sensorTypes != null && (j - 1) < sensorTypes.size())
+                                ? sensorTypes.get(j - 1).trim().toLowerCase()
+                                : null;
+
+                        if ("min_temp".equals(sensorType)) {
+                            dataPoint.put("outdoorMinTemperature", raw);
+                        } else if ("max_temp".equals(sensorType)) {
+                            dataPoint.put("outdoorMaxTemperature", raw);
+                        } else if ("temperature".equals(sensorType)) {
+                            dataPoint.put("outdoorTemperature", raw);
+                        } else if ("humidity".equals(sensorType) || "min_hum".equals(sensorType) || "max_hum".equals(sensorType)) {
+                            dataPoint.put("outdoorHumidity", raw);
+                        } else if ("co2".equals(sensorType)) {
+                            dataPoint.put("outdoorCO2", raw);
+                        } else {
+                            // No type info — positional fallback
+                            if (j == 1) dataPoint.put("outdoorTemperature", raw);
+                            else if (j == 2) dataPoint.put("outdoorHumidity", raw);
+                        }
+                    }
+                }
+
+                result.add(dataPoint);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Backwards-compatible overload — delegates to the sensor-type-aware variant with null types.
      */
     public static List<Object> processDataPoints(
             NetatmoMeasurementData parsedData,
             List<List<Object>> outdoorDataPoints,
             long beginTimeTimestamp,
             int stepTime) {
-        
-        List<Object> result = new ArrayList<>();
-        
-        if (parsedData.values != null) {
-            for (int i = 0; i < parsedData.values.size(); i++) {
-                long timestamp = beginTimeTimestamp + (i * stepTime);
-                Object indoorValue = parsedData.values.get(i);
-                
-                // Format timestamp as ISO string (yyyy-MM-dd HH:mm) using UTC
-                String formattedTimestamp = formatTimestamp(timestamp, "yyyy-MM-dd HH:mm");
-                
-                // Create a map for this data point
-                Map<String, Object> dataPoint = new HashMap<>();
-                dataPoint.put("timestamp", formattedTimestamp);
-                
-                // Add indoor values
-                if (indoorValue instanceof List<?>) {
-                    List<?> indoorValues = (List<?>) indoorValue;
-                    if (indoorValues.size() >= 1) {
-                        dataPoint.put("indoorTemperature", indoorValues.get(0));
-                    }
-                    if (indoorValues.size() >= 2) {
-                        dataPoint.put("indoorHumidity", indoorValues.get(1));
-                    }
-                    if (indoorValues.size() >= 3) {
-                        dataPoint.put("indoorPressure", indoorValues.get(2));
-                    }
-                }
-                
-                // Add outdoor values if available
-                if (outdoorDataPoints != null && i < outdoorDataPoints.size()) {
-                    List<Object> outdoorPoint = outdoorDataPoints.get(i);
-                    if (outdoorPoint.size() >= 2) { // First element is timestamp
-                        dataPoint.put("outdoorTemperature", outdoorPoint.get(1));
-                    }
-                    if (outdoorPoint.size() >= 3) {
-                        dataPoint.put("outdoorHumidity", outdoorPoint.get(2));
-                    }
-                }
-                
-                result.add(dataPoint);
-            }
-        }
-        
-        return result;
+        return processDataPoints(parsedData, outdoorDataPoints, beginTimeTimestamp, stepTime, null);
     }
     
     /**

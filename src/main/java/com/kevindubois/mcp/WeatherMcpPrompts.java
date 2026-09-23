@@ -33,24 +33,6 @@ public class WeatherMcpPrompts {
         );
     }
 
-    @Prompt(description = "Compare weather data between two time periods")
-    public List<PromptMessage> weather_comparison(
-            @PromptArg(description = "First period start date (YYYY-MM-DD)") String period1Start,
-            @PromptArg(description = "First period end date (YYYY-MM-DD)") String period1End,
-            @PromptArg(description = "Second period start date (YYYY-MM-DD)") String period2Start,
-            @PromptArg(description = "Second period end date (YYYY-MM-DD)") String period2End) {
-        return List.of(
-            PromptMessage.withAssistantRole(new TextContent(
-                "You are a data analyst specializing in weather patterns. " +
-                "Use the get_historical_weather tool to fetch data for both periods, then compare " +
-                "temperatures, humidity, and pressure trends. Highlight significant differences.")),
-            PromptMessage.withUserRole(new TextContent(
-                "Compare the weather between " + period1Start + " to " + period1End +
-                " and " + period2Start + " to " + period2End +
-                ". What are the key differences in temperature, humidity, and pressure?"))
-        );
-    }
-
     @Prompt(description = "Analyze sensor readings for a device and flag any anomalies or concerns")
     public List<PromptMessage> device_diagnostics(
             @PromptArg(description = "Device ID to analyze") String deviceId,

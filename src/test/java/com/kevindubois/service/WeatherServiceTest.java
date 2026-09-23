@@ -222,16 +222,22 @@ class WeatherServiceTest {
         // Call the method
         ApiResponse<List<DeviceInfo>> result = weatherService.getAvailableDevices();
 
-        // Verify the result
+        // Verify the result: the main station plus its outdoor module
         assertTrue(result.isSuccess());
         assertNotNull(result.getData());
-        assertEquals(1, result.getData().size());
-        
+        assertEquals(2, result.getData().size());
+
         DeviceInfo device = result.getData().get(0);
         assertEquals("station1", device.id());
         assertEquals("Home Weather Station", device.name());
         assertEquals("NAMain", device.type());
         assertEquals(5, device.dataTypes().size());
+
+        DeviceInfo outdoor = result.getData().get(1);
+        assertEquals("module1", outdoor.id());
+        assertEquals("Outdoor Module", outdoor.name());
+        assertEquals("NAModule1", outdoor.type());
+        assertEquals(2, outdoor.dataTypes().size());
     }
 
     @Test
