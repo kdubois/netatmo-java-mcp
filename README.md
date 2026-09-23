@@ -2,6 +2,8 @@
 
 Quarkus MCP Server that connects to the Netatmo Weather Station API. Also exposes REST endpoints.
 
+You can find a sample client app at https://github.com/kdubois/homebot
+
 ## MCP Server
 
 ### Endpoints
