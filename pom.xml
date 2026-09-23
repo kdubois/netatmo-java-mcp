@@ -15,7 +15,7 @@
         <quarkus.platform.version>3.39.4</quarkus.platform.version>
         <quarkus.mcp.version>2.0.1</quarkus.mcp.version>
         <skipITs>true</skipITs>
-        <surefire-plugin.version>3.5.4</surefire-plugin.version>
+        <surefire-plugin.version>3.6.0</surefire-plugin.version>
         <jacoco.version>0.8.14</jacoco.version>
     </properties>
 
